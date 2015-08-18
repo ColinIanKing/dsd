@@ -37,6 +37,7 @@
 
 #include "dsd.h"
 #include "db.h"
+#include "version.h"
 
 struct dsd_property_queue_head *dpqheadp;
 

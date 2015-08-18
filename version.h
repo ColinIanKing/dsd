@@ -1,5 +1,5 @@
-#ifndef __LOCAL_DSD_H
-#define __LOCAL_DSD_H
+#ifndef __LOCAL_VERSION_H
+#define __LOCAL_VERSION_H
 /******************************************************************************
  * The MIT License (MIT)
  *
@@ -30,56 +30,6 @@
  ******************************************************************************
  */
 
-#include <sys/queue.h>
-
-#define CMD_ADD		"add"
-#define CMD_DELETE	"delete"
-#define CMD_HELP	"help"
-#define CMD_INIT	"init"
-#define CMD_LIST	"list"
-#define CMD_LOOKUP	"lookup"
-
-#define TOK_DESCRIPTION	"description"
-#define TOK_EXAMPLE	"example"
-
-#define TOK_OWNER	"owner"
-#define TOK_PROPERTY	"property"
-#define TOK_TOKEN	"token"
-#define TOK_TYPE	"type"
-#define TOK_VALUES	"values"
-
-#define TYPE_HEX_ADDR_PKG	"hexadecimal-address-package"
-#define TYPE_HEX_INTEGER	"hexadecimal-integer"
-#define TYPE_INTEGER		"integer"
-#define TYPE_STRING		"string"
-
-enum dsd_command {
-	dsd_add = 0,
-	dsd_delete,
-	dsd_help,
-	dsd_init,
-	dsd_list,
-	dsd_lookup,
-	dsd_undefined
-};
-
-TAILQ_HEAD(dsd_property_queue_head, dsd_property) dpqhead;
-extern struct dsd_property_queue_head *dpqheadp;
-
-struct dsd_property_value {
-	char	*token;
-	char	*description;
-	TAILQ_ENTRY(dsd_property_value) entries;
-};
-
-struct dsd_property {
-	char	*property;
-	char	*type;
-	char	*owner;
-	char	*description;
-	char	*example;
-	TAILQ_HEAD(dsd_property_value_head, dsd_property_value) values;
-	TAILQ_ENTRY(dsd_property) entries;
-};
+#define VERSION		"0.1.11"
 
 #endif

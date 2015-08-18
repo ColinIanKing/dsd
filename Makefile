@@ -34,7 +34,7 @@ LIBS	= -lyaml
 dsd: dsd.o db.o
 	$(CC) $(CFLAGS) -o dsd dsd.o db.o $(LIBS)
 
-dsd.o: dsd.h db.h dsd.c
+dsd.o: dsd.h db.h version.h dsd.c
 	$(CC) $(CFLAGS) -c dsd.c
 
 db.o: dsd.h db.h db.c
