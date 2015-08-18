@@ -32,7 +32,7 @@
 
 #include <sys/queue.h>
 
-#define VERSION		"0.1.9"
+#define VERSION		"0.1.10"
 
 #define CMD_ADD		"add"
 #define CMD_DELETE	"delete"
@@ -43,8 +43,10 @@
 
 #define TOK_DESCRIPTION	"description"
 #define TOK_EXAMPLE	"example"
+
 #define TOK_OWNER	"owner"
 #define TOK_PROPERTY	"property"
+#define TOK_TOKEN	"token"
 #define TOK_TYPE	"type"
 #define TOK_VALUES	"values"
 
@@ -66,12 +68,19 @@ enum dsd_command {
 TAILQ_HEAD(dsd_property_queue_head, dsd_property) dpqhead;
 extern struct dsd_property_queue_head *dpqheadp;
 
+struct dsd_property_value {
+	char	*token;
+	char	*description;
+	TAILQ_ENTRY(dsd_property_value) entries;
+};
+
 struct dsd_property {
 	char	*property;
 	char	*type;
 	char	*owner;
 	char	*description;
 	char	*example;
+	TAILQ_HEAD(dsd_property_value_head, dsd_property_value) values;
 	TAILQ_ENTRY(dsd_property) entries;
 };
 

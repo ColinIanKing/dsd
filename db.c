@@ -161,6 +161,16 @@ int db_write(struct dsd_property *prop)
 		}
 	}
 
+	if (!TAILQ_EMPTY(&prop->values)) {
+		struct dsd_property_value *pvp;
+
+		fprintf(fp, "values:\n");
+		TAILQ_FOREACH(pvp, &prop->values, entries) {
+			fprintf(fp, "\t- token: %s\n", pvp->token);
+			fprintf(fp, "\t  description: %s\n", pvp->description);
+		}
+	}
+
 	fclose(fp);
 	free_path(path);
 	return 0;

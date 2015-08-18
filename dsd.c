@@ -127,6 +127,21 @@ void add_properties(char *dbname)
 	printf("-> Finished with db: %s\n", dbname);
 }
 
+void set_value(char **field, yaml_event_t *event)
+{
+	int len;
+
+	len = (event->data.scalar.length < sizeof(int)) ?
+			sizeof(int) : event->data.scalar.length;
+	*field = malloc(len);
+	if (!(*field)) {
+		fprintf(stderr, "? no malloc space\n");
+		exit(10);
+	}
+	memset(*field, 0, len);
+	strncpy(*field, event->data.scalar.value, event->data.scalar.length);
+}
+
 void queue_file(char *filename)
 {
 	FILE *fp;
@@ -135,6 +150,7 @@ void queue_file(char *filename)
 	int state;
 	int doc_ok;
 	struct dsd_property *property = NULL;
+	struct dsd_property_value *value = NULL;
 
 	fp = fopen(filename, "r");
 	if (!fp) {
@@ -190,16 +206,39 @@ void queue_file(char *filename)
 			break;
 
 		case YAML_SEQUENCE_START_EVENT:
-			printf("\t\t-> Sequence Start\n");
-			if (state == 6)
-				printf("start here...\n");
-			state = 0;
+			//printf("\t\t-> Sequence Start\n");
+			if (state == 0) {
+				state = 0;
+			} else if (state == 6) {
+				state = 7;
+				TAILQ_INIT(&property->values);
+			} else {
+				fprintf(stderr, "? expected a sequence\n");
+				event.type = YAML_STREAM_END_EVENT;
+				state = 0;
+			}
 			break;
 		case YAML_SEQUENCE_END_EVENT:
-			printf("\t\t-> Sequence End\n");
+			//printf("\t\t-> Sequence End\n");
+			state = 0;
 			break;
 		case YAML_MAPPING_START_EVENT:
 			//printf("\t\t-> Mapping Start\n");
+			if (state == 0) {
+				state = 0;
+			} else if (state == 7) {
+				state = 8;
+				value = malloc(sizeof(struct dsd_property_value));
+				if (!value) {
+					fprintf(stderr, "? cannot malloc property value\n");
+					exit(1);
+				}
+				memset(value, 0, sizeof(struct dsd_property_value));
+			} else {
+				fprintf(stderr, "? expected a token: entry\n");
+				event.type = YAML_STREAM_END_EVENT;
+				state = 0;
+			}
 			break;
 		case YAML_MAPPING_END_EVENT:
 			//printf("\t\t-> Mapping End\n");
@@ -216,22 +255,22 @@ void queue_file(char *filename)
 				}
 				else if (!strcasecmp(event.data.scalar.value,
 					 TOK_DESCRIPTION)) {
-					//printf("\tdescription:\n");
+					printf("\tdescription: |\n");
 					state = 2;
 				}
 				else if (!strcasecmp(event.data.scalar.value,
 					 TOK_OWNER)) {
-					//printf("\towner: ");
+					printf("\towner: ");
 					state = 3;
 				}
 				else if (!strcasecmp(event.data.scalar.value,
 					 TOK_EXAMPLE)) {
-					//printf("\texample: ");
+					printf("\texample: |\n");
 					state = 4;
 				}
 				else if (!strcasecmp(event.data.scalar.value,
 					 TOK_TYPE)) {
-					//printf("\ttype: ");
+					printf("\ttype: ");
 					state = 5;
 				}
 				else if (!strcasecmp(event.data.scalar.value,
@@ -242,53 +281,62 @@ void queue_file(char *filename)
 				break;
 			case 1:
 				printf("%s\n", event.data.scalar.value);
-				property->property =
-					malloc(event.data.scalar.length);
-				strncpy(property->property,
-				        event.data.scalar.value,
-					event.data.scalar.length);
+				set_value(&property->property, &event);
 				state = 0;
 				break;
 			case 2:
-				//printf("%s\n", event.data.scalar.value);
-				property->description =
-					malloc(event.data.scalar.length);
-				strncpy(property->description,
-				        event.data.scalar.value,
-					event.data.scalar.length);
+				printf("\t%s\n", event.data.scalar.value);
+				set_value(&property->description, &event);
 				state = 0;
 				break;
 			case 3:
-				//printf("%s\n", event.data.scalar.value);
-				property->owner =
-					malloc(event.data.scalar.length);
-				strncpy(property->owner,
-				        event.data.scalar.value,
-					event.data.scalar.length);
+				printf("%s\n", event.data.scalar.value);
+				set_value(&property->owner, &event);
 				state = 0;
 				break;
 			case 4:
-				//printf("%s\n", event.data.scalar.value);
-				property->example =
-					malloc(event.data.scalar.length);
-				strncpy(property->example,
-				        event.data.scalar.value,
-					event.data.scalar.length);
+				printf("\t%s\n", event.data.scalar.value);
+				set_value(&property->example, &event);
 				state = 0;
 				break;
 			case 5:
-				//printf("%s\n", event.data.scalar.value);
-				property->type =
-					malloc(event.data.scalar.length);
-				strncpy(property->type,
-				       	event.data.scalar.value,
-					event.data.scalar.length);
+				printf("%s\n", event.data.scalar.value);
+				set_value(&property->type, &event);
 				if (invalid_type(property->type)) {
 					fprintf(stderr, "? invalid type: %s\n",
 						property->type);
 					exit(1);
 				}
 				state = 0;
+				break;
+			/* case 6-7: see sequence start ... */
+			case 8:
+				if (!strcasecmp(event.data.scalar.value,
+				    TOK_TOKEN)) {
+					printf("\t\t- token: ");
+					state = 9;
+				} else {
+					state = 0;
+				}
+				break;
+			case 9:
+				printf("%s\n", event.data.scalar.value);
+				set_value(&value->token, &event);
+				state = 10;
+				break;
+			case 10:
+				if (!strcasecmp(event.data.scalar.value,
+				    TOK_DESCRIPTION)) {
+					printf("\t\t  description: ");
+					state = 11;
+				}
+				break;
+			case 11:
+				printf("%s\n", event.data.scalar.value);
+				set_value(&value->description, &event);
+				TAILQ_INSERT_TAIL(&(property->values),
+						  value, entries);
+				state = 7;
 				break;
 			default:
 				fprintf(stderr, "? internal error, state: %d\n",
