@@ -272,8 +272,14 @@ int db_prop_write(struct dsd_property *prop)
 	if (prop->owner)
 		fprintf(fp, "owner: %s\n", prop->owner);
 
-	if (prop->device)
-		fprintf(fp, "device: %s\n", prop->device);
+	if (!TAILQ_EMPTY(&prop->devices)) {
+		struct dsd_device_name *dnp;
+
+		fprintf(fp, "devices:\n");
+		TAILQ_FOREACH(dnp, &prop->devices, entries) {
+			fprintf(fp, "\t- %s\n", dnp->name);
+		}
+	}
 
 	if (prop->description) {
 		fprintf(fp, "description: |\n");

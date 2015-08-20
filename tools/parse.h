@@ -1,5 +1,5 @@
-#ifndef __LOCAL_DSD_H
-#define __LOCAL_DSD_H
+#ifndef __LOCAL_PARSE_H
+#define __LOCAL_PARSE_H
 /******************************************************************************
  * The MIT License (MIT)
  *
@@ -30,68 +30,32 @@
  ******************************************************************************
  */
 
-#include <sys/queue.h>
+#include "dsd.h"
 
-#define CMD_ADD		"add"
-#define CMD_DELETE	"delete"
-#define CMD_HELP	"help"
-#define CMD_INIT	"init"
-#define CMD_LIST	"list"
-#define CMD_LOOKUP	"lookup"
+#define TOK_DESCRIPTION	"description"
+#define TOK_EXAMPLE	"example"
 
-#define SUBCMD_ALL	"all"
-#define SUBCMD_DEVS	"devs"
-#define SUBCMD_PROPS	"props"
+#define TOK_DEVICE	"device"
+#define TOK_DEVICES	"devices"
+#define TOK_OWNER	"owner"
+#define TOK_PROPERTY	"property"
+#define TOK_PROPERTIES	"properties"
+#define TOK_TOKEN	"token"
+#define TOK_TYPE	"type"
+#define TOK_VALUES	"values"
 
-enum dsd_command {
-	dsd_add = 0,
-	dsd_delete,
-	dsd_help,
-	dsd_init,
-	dsd_list,
-	dsd_lookup,
-	dsd_undefined
+#define TYPE_HEX_ADDR_PKG	"hexadecimal-address-package"
+#define TYPE_HEX_INTEGER	"hexadecimal-integer"
+#define TYPE_INTEGER		"integer"
+#define TYPE_STRING		"string"
+
+enum dsd_doc_type {
+	DUNNO,
+	DEVDOC,
+	PROPDOC
 };
 
-TAILQ_HEAD(dsd_property_queue_head, dsd_property) dpqhead;
-extern struct dsd_property_queue_head *dpqheadp;
-
-struct dsd_property_value {
-	char	*token;
-	char	*description;
-	TAILQ_ENTRY(dsd_property_value) entries;
-};
-
-struct dsd_device_name {
-	char	*name;
-	TAILQ_ENTRY(dsd_device_name) entries;
-};
-
-struct dsd_property {
-	char	*property;
-	char	*type;
-	char	*owner;
-	TAILQ_HEAD(dsd_device_name_head, dsd_device_name) devices;
-	char	*description;
-	char	*example;
-	TAILQ_HEAD(dsd_property_value_head, dsd_property_value) values;
-	TAILQ_ENTRY(dsd_property) entries;
-};
-
-TAILQ_HEAD(dsd_device_queue_head, dsd_device) ddqhead;
-extern struct dsd_device_queue_head *ddqheadp;
-
-struct dsd_device_property {
-	char	*property;
-	TAILQ_ENTRY(dsd_device_property) entries;
-};
-
-struct dsd_device {
-	char	*device;
-	char	*owner;
-	char	*description;
-	TAILQ_HEAD(dsd_device_property_head, dsd_device_property) properties;
-	TAILQ_ENTRY(dsd_device) entries;
-};
+extern struct dsd_device *parse_dev_doc(char *buf);
+extern struct dsd_property *parse_prop_doc(char *buf);
 
 #endif

@@ -6,7 +6,7 @@
 #
 ---
 device:         generic-nic
-description:        general use network interface card
+description:    general use network interface card
 owner:          Al Stone <ahs3@redhat.com>
 properties:
    - phy-mode
@@ -15,8 +15,9 @@ properties:
 ---
 property:       phy-mode
 owner:          Al Stone <ahs3@redhat.com>
-device:         generic-nic
 type:           string
+devices:
+        - generic-nic
 values:
         - token:        na
           description:  none available
@@ -58,7 +59,8 @@ example: |
 property:       phy-channel
 owner:          Al Stone <ahs3@redhat.com>
 type:           hexadecimal-integer
-device:         generic-nic
+devices:
+        - generic-nic
 description: |
         If present, defines the PHY channel to be used by this device.
 example: |
@@ -67,7 +69,8 @@ example: |
 ---
 property:       mac-address
 owner:          Al Stone <ahs3@redhat.com>
-device:         generic-nic
+devices:
+        - generic-nic
 type:           hexadecimal-address-package
 description: |
         Provides the Ethernet address assigned to the MAC
@@ -80,7 +83,8 @@ example: |
 ---
 property:       max-transfer-unit
 owner:          Al Stone <ahs3@redhat.com>
-device:         generic-nic
+devices:
+        - generic-nic
 type:           hexadecimal-integer
 description: |
         Specifies the MTU (IEEE defined maximum transfer unit)
@@ -91,7 +95,8 @@ example: |
 ---
 property:       max-speed
 owner:          Al Stone <ahs3@redhat.com>
-device:         generic-nic
+devices:
+        - generic-nic
 type:           hexadecimal-integer
 description: |
         Specifies the maximum speed in Mbits/second supported by
