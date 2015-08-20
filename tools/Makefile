@@ -40,5 +40,8 @@ dsd.o: dsd.h db.h version.h dsd.c
 db.o: dsd.h db.h db.c
 	$(CC) $(CFLAGS) -c db.c
 
+install:
+	cp dsd ..
+
 clean:
 	rm -f *.o dsd
