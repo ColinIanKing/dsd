@@ -1,0 +1,101 @@
+# example yaml file for basic NIC properties
+#
+# This is an example of registering for device properties used with the
+# _DSD data format associated with UUID daffd814-6eba-4d8c-8a91-bc9bbf4aa301
+# the "Device Properties UUID."
+#
+---
+device:         generic-nic
+description:        general use network interface card
+owner:          Al Stone <ahs3@redhat.com>
+properties:
+   - phy-mode
+   - phy-channel
+   - mac-address
+---
+property:       phy-mode
+owner:          Al Stone <ahs3@redhat.com>
+device:         generic-nic
+type:           string
+values:
+        - token:        na
+          description:  none available
+        - token:        mii
+          description:  media independent interface (MII)
+        - token:        gmii
+          description:  gigabit MII
+        - token:        sgmii
+          description:  serial gigabit MII
+        - token:        tbi
+          description:  ten bit interface
+        - token:        revmii
+          description:  reverse MII
+        - token:        rmii
+          description:  reduced MII
+        - token:        rgmii
+          description:  reduced gigabit MII (RGMII)
+        - token:        rgmii-id
+          description:  RGMII with internal delay
+        - token:        rgmii-rxid
+          description:  RGMII with receive delay only
+        - token:        rgmii-txid
+          description:  RGMII with transmit delay only
+        - token:        rtbi
+          description:  reduced ten bit interface
+        - token:        smii
+          description:  serial MII
+        - token:        xgmii
+          description:  10 gigabit MII
+        - token:        moca
+          description:  multimedia over coax
+        - token:        qsgmii
+          description:  quad serial gigabit MII
+description: |
+        Defines the PHY mode to be used for this device.
+example: |
+        Package (2) { "phy-mode", "xgmii" }
+---
+property:       phy-channel
+owner:          Al Stone <ahs3@redhat.com>
+type:           hexadecimal-integer
+device:         generic-nic
+description: |
+        If present, defines the PHY channel to be used by this device.
+example: |
+        Package (2) { "phy-channel", 3 }
+
+---
+property:       mac-address
+owner:          Al Stone <ahs3@redhat.com>
+device:         generic-nic
+type:           hexadecimal-address-package
+description: |
+        Provides the Ethernet address assigned to the MAC
+        in a network device (also known as a MAC address)
+example: |
+        Package (2) { "mac-address",
+                      Package (6) { 00, 11, 22, 33, 44, 55 }
+                    }
+
+---
+property:       max-transfer-unit
+owner:          Al Stone <ahs3@redhat.com>
+device:         generic-nic
+type:           hexadecimal-integer
+description: |
+        Specifies the MTU (IEEE defined maximum transfer unit)
+        supported by the device
+example: |
+        Package (2) { "max-transfer-unit", 5dc }   // MTU of 1500
+
+---
+property:       max-speed
+owner:          Al Stone <ahs3@redhat.com>
+device:         generic-nic
+type:           hexadecimal-integer
+description: |
+        Specifies the maximum speed in Mbits/second supported by
+        the device
+example: |
+        Package (2) { "max-speed", 3e8 }   // 1000 Mbps
+
