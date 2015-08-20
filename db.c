@@ -29,6 +29,7 @@
  */
 
 #include <dirent.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,12 +41,53 @@
 #include "dsd.h"
 #include "db.h"
 
+#define PROPS		"properties"
+#define DEVS		"devices"
+
 static char *dbname = NULL;
 
 int db_init(char *dirname)
 {
-	/* create a "data base": for now, this just means a directory */
-	return mkdir(dirname, S_IRWXU | S_IRWXG);
+	int err;
+	char *path;
+
+	/*
+	 * create a "data base": for now, this means create a directory
+	 * and within it two subdirectories
+	 */
+	err = mkdir(dirname, S_IRWXU | S_IRWXG);
+	if (err) {
+		perror("? init mkdir failed");
+		return errno;
+	}
+
+	path = malloc(3 * MAXPATHLEN);
+	if (!path) {
+		fprintf(stderr, "? init path malloc failed\n");
+		return errno;
+	}
+
+	memset(path, 0, 3 * MAXPATHLEN);
+	strcpy(path, dirname);
+	strcat(path, "/");
+	strcat(path, PROPS);
+	err = mkdir(path, S_IRWXU | S_IRWXG);
+	if (err) {
+		perror("? init mkdir props failed");
+		return errno;
+	}
+
+	memset(path, 0, 3 * MAXPATHLEN);
+	strcpy(path, dirname);
+	strcat(path, "/");
+	strcat(path, DEVS);
+	err = mkdir(path, S_IRWXU | S_IRWXG);
+	if (err) {
+		perror("? init mkdir devs failed");
+		return errno;
+	}
+
+	return 0;
 }
 
 int db_open(char *dirname)
@@ -77,22 +119,36 @@ int db_close(char *dirname)
 	return 0;
 }
 
-static char *build_path(char *propname)
+static char *__build_path(char *prefix, char *name)
 {
 	char *path;
 
-	path = malloc(3 * MAXPATHLEN);
+	path = malloc(4 * MAXPATHLEN);
 	if (!path) {
 		fprintf(stderr, "? path malloc failed\n");
 		exit(1);
 	}
 
-	memset(path, 0, 3 * MAXPATHLEN);
+	memset(path, 0, 4 * MAXPATHLEN);
 	strcpy(path, dbname);
 	strcat(path, "/");
-	strcat(path, propname);
+	strcat(path, prefix);
+	if (name) {
+		strcat(path, "/");
+		strcat(path, name);
+	}
 
 	return path;
+}
+
+static char *build_dev_path(char *devname)
+{
+	return __build_path(DEVS, devname);
+}
+
+static char *build_prop_path(char *propname)
+{
+	return __build_path(PROPS, propname);
 }
 
 static void free_path(char *path)
@@ -101,13 +157,13 @@ static void free_path(char *path)
 		free(path);
 }
 
-int db_lookup(char *propnam)
+int db_dev_lookup(char *name)
 {
 	struct stat sb;
 	char *path;
 
-	/* see if the property named is in the db */
-	path = build_path(propnam);
+	/* see if the device named is in the db */
+	path = build_dev_path(name);
 	if (!dbname) {
 		fprintf(stderr, "? must invoke db_open first\n");
 		exit(1);
@@ -121,14 +177,87 @@ int db_lookup(char *propnam)
 	return 0;
 }
 
-int db_write(struct dsd_property *prop)
+int db_prop_lookup(char *name)
+{
+	struct stat sb;
+	char *path;
+
+	/* see if the property named is in the db */
+	path = build_prop_path(name);
+	if (!dbname) {
+		fprintf(stderr, "? must invoke db_open first\n");
+		exit(1);
+	}
+
+	stat(path, &sb);
+	free_path(path);
+	if (!S_ISREG(sb.st_mode))
+		return 1;
+
+	return 0;
+}
+
+int db_lookup(char *name)
+{
+	if (!db_prop_lookup(name))
+		return 0;
+
+	if (!db_dev_lookup(name))
+		return 0;
+
+	return 1;
+}
+
+int db_dev_write(struct dsd_device *dev)
+{
+	FILE *fp;
+	char *path;
+	char *tmp;
+
+	/* write the device to the db */
+	path = build_dev_path(dev->device);
+	fp = fopen(path, "w");
+	if (!fp) {
+		fprintf(stderr, "? cannot open device: %s\n", dev->device);
+		exit(1);
+	}
+
+	fprintf(fp, "device: %s\n", dev->device);
+
+	if (dev->owner)
+		fprintf(fp, "owner: %s\n", dev->owner);
+
+	if (dev->description) {
+		fprintf(fp, "description: |\n");
+		tmp = strtok(dev->description, "\n");
+		while (tmp) {
+			fprintf(fp, "\t%s\n", tmp);
+			tmp = strtok(NULL, "\n");
+		}
+	}
+
+	if (!TAILQ_EMPTY(&dev->properties)) {
+		struct dsd_device_property *dvp;
+
+		fprintf(fp, "properties:\n");
+		TAILQ_FOREACH(dvp, &dev->properties, entries) {
+			fprintf(fp, "\t- %s\n", dvp->property);
+		}
+	}
+
+	fclose(fp);
+	free_path(path);
+	return 0;
+}
+
+int db_prop_write(struct dsd_property *prop)
 {
 	FILE *fp;
 	char *path;
 	char *tmp;
 
 	/* write the property to the db */
-	path = build_path(prop->property);
+	path = build_prop_path(prop->property);
 	fp = fopen(path, "w");
 	if (!fp) {
 		fprintf(stderr, "? cannot open property: %s\n", prop->property);
@@ -142,6 +271,9 @@ int db_write(struct dsd_property *prop)
 
 	if (prop->owner)
 		fprintf(fp, "owner: %s\n", prop->owner);
+
+	if (prop->device)
+		fprintf(fp, "device: %s\n", prop->device);
 
 	if (prop->description) {
 		fprintf(fp, "description: |\n");
@@ -176,19 +308,24 @@ int db_write(struct dsd_property *prop)
 	return 0;
 }
 
-int db_cat(char *propname)
+int db_cat(char *name)
 {
 	FILE *fp;
 	char *path;
 	char *tmp;
 	size_t len;
 
-	/* write the property info to stdout */
-	path = build_path(propname);
+	/* write info to stdout */
+	path = build_prop_path(name);
 	fp = fopen(path, "r");
-	if (!fp) {
-		fprintf(stderr, "? cannot open property: %s\n", propname);
-		exit(1);
+	if (!fp) {		/* not a property, maybe a device? */
+		free_path(path);
+		path = build_dev_path(name);
+		fp = fopen(path, "r");
+		if (!fp) {
+			fprintf(stderr, "? no such entry: %s\n", name);
+			exit(1);
+		}
 	}
 
 	tmp = malloc(MAXPATHLEN);
@@ -206,39 +343,49 @@ int db_cat(char *propname)
 	return 0;
 }
 
-int db_delete(char *propname)
+int db_delete(char *name)
 {
-	char *path;
+	char *ppath;
+	char *dpath;
 
 	/* delete the property from the db */
-	path = build_path(propname);
-	if (unlink(path)) {
-		fprintf(stderr, "? cannot delete property: %s\n", propname);
-		exit(1);
+	ppath = build_prop_path(name);
+	if (unlink(ppath)) {
+		/* maybe it's a device, not a property */
+		dpath = build_dev_path(name);
+		if (unlink(dpath)) {
+			fprintf(stderr, "? no such property or device: %s\n",
+				name);
+			exit(1);
+		}
+		free_path(dpath);
 	}
-	free_path(path);
+	free_path(ppath);
 	return 0;
 }
 
-int db_list(void)
+int db_prop_list(void)
 {
 	DIR *dirp;
 	struct dirent *dep;
+	char *propdb;
 
 	/*
-	 * list all the files in the db -- this is logically
-	 * equivalent to listing all the property names
+	 * list all the properties in the db -- this is logically
+	 * equivalent to listing all the property file names
 	 */
 	if (!dbname) {
 		fprintf(stderr, "? must open db first\n");
 		exit(1);
 	}
-	dirp = opendir(dbname);
+	propdb = build_prop_path(NULL);
+	dirp = opendir(propdb);
 	if (!dirp) {
 		fprintf(stderr, "? cannot open db directory\n");
 		exit(1);
 	}
 
+	printf("-- all property names\n");
 	dep = readdir(dirp);
 	while (dep) {
 		if (strcmp(dep->d_name, ".") && strcmp(dep->d_name, ".."))
@@ -249,3 +396,44 @@ int db_list(void)
 	closedir(dirp);
 	return 0;
 }
+
+int db_dev_list(void)
+{
+	DIR *dirp;
+	struct dirent *dep;
+	char *devdb;
+
+	/*
+	 * list all the devices in the db -- this is logically
+	 * equivalent to listing all the device file names
+	 */
+	if (!dbname) {
+		fprintf(stderr, "? must open db first\n");
+		exit(1);
+	}
+	devdb = build_dev_path(NULL);
+	dirp = opendir(devdb);
+	if (!dirp) {
+		fprintf(stderr, "? cannot open db directory\n");
+		exit(1);
+	}
+
+	printf("-- all device names\n");
+	dep = readdir(dirp);
+	while (dep) {
+		if (strcmp(dep->d_name, ".") && strcmp(dep->d_name, ".."))
+			printf("%s\n", dep->d_name);
+		dep = readdir(dirp);
+	}
+
+	closedir(dirp);
+	return 0;
+}
+
+int db_list(void)
+{
+	db_dev_list();
+	db_prop_list();
+	return 0;
+}
+

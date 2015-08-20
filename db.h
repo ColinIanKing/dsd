@@ -35,10 +35,15 @@
 int db_cat(char *propname);			/* write property to stdout */
 int db_close(char *dirname);			/* close the open "data base" */
 int db_delete(char *propname);			/* remove property from db */
+int db_dev_list(void);				/* list all devices */
+int db_dev_lookup(char *name);			/* look for device */
 int db_init(char *dirname);			/* create a "data base" */
-int db_list(void);				/* list all properties */
-int db_lookup(char *propname);			/* look for a property */
+int db_list(void);				/* list all entries */
+int db_lookup(char *name);			/* look for property or dev */
 int db_open(char *dirname);			/* open the "data base" */
-int db_write(struct dsd_property *prop);	/* write a property into db */
+int db_prop_list(void);				/* list all properties */
+int db_prop_lookup(char *name);			/* look for property */
+int db_dev_write(struct dsd_device *dev);	/* write a device into db */
+int db_prop_write(struct dsd_property *prop);	/* write a property into db */
 
 #endif

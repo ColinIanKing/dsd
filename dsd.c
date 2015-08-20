@@ -40,6 +40,13 @@
 #include "version.h"
 
 struct dsd_property_queue_head *dpqheadp;
+struct dsd_device_queue_head *ddqheadp;
+
+enum doc_type {
+	DUNNO,
+	DEVDOC,
+	PROPDOC
+};
 
 enum dsd_command valid_command(char *cmd)
 {
@@ -77,38 +84,67 @@ void usage(char *cmd)
 {
 	fprintf(stderr, "%s, version %s\n", basename(cmd), VERSION);
 
-	fprintf(stderr, "usage: %s <command> [<value> ...]\n", cmd);
+	fprintf(stderr, "usage: %s <command> <dbname> [<value> ...]\n", cmd);
 	fprintf(stderr, "where <command> is one of:\n");
-	fprintf(stderr, "\tadd     => there must be at least two <value>s:\n");
-	fprintf(stderr, "\t           the first is the db name, and the\n");
-	fprintf(stderr, "\t           remainder are file names containing\n");
-	fprintf(stderr, "\t           entries to add to the db\n");
-	fprintf(stderr, "\tdelete  => there must be at least two <value>s:\n");
-	fprintf(stderr, "\t           the first is the db name, and the\n");
-	fprintf(stderr, "\t           remainder are properties to remove\n");
-	fprintf(stderr, "\t           from the db\n");
+	fprintf(stderr, "\tadd     => one or more <value>s are required,\n");
+	fprintf(stderr, "\t           each a file name containing entries\n");
+	fprintf(stderr, "\t           to add to <dbname>\n");
+	fprintf(stderr, "\tdelete  => one or more <value>s are required,\n");
+	fprintf(stderr, "\t           each a property or device to remove\n");
+	fprintf(stderr, "\t           from <dbname>\n");
 	fprintf(stderr, "\thelp    => this message; no <value> needed\n");
 	fprintf(stderr, "\tinit    => create a dsd property db in the\n");
-	fprintf(stderr, "\t           directory given by <value>\n");
-	fprintf(stderr, "\tlist    => print all known property names from\n");
-	fprintf(stderr, "\t           the db name given by <value>\n");
-	fprintf(stderr, "\tlookup  => there must be at least two <value>s:\n");
-	fprintf(stderr, "\t           the first is the db name, and the\n");
-	fprintf(stderr, "\t           remainder are property names to look\n");
-	fprintf(stderr, "\t           for in the db; if found, their info\n");
-	fprintf(stderr, "\t           will be written to stdout\n");
+	fprintf(stderr, "\t           directory given by <dbname>\n");
+	fprintf(stderr, "\tlist [devs | props | all]\n");
+	fprintf(stderr, "\t        => if \"devs\", print all known devices\n");
+	fprintf(stderr, "\t           in <dbname>, if \"props\" print all\n");
+	fprintf(stderr, "\t           known properties, and if \"all\" or\n");
+	fprintf(stderr, "\t           not given, do both\n");
+	fprintf(stderr, "\tlookup  => one or more <value>s are required,\n");
+	fprintf(stderr, "\t           each a device or property name to\n");
+	fprintf(stderr, "\t           to look for in <dbname>; if found,\n");
+	fprintf(stderr, "\t           their info will be written to stdout\n");
+}
+
+int find_dev(char *name)
+{
+	struct dsd_device *dp;
+
+	for (dp = ddqhead.tqh_first; dp != NULL; dp = dp->entries.tqe_next) {
+		if (!strcasecmp(dp->device, name))
+			return 0;
+	}
+	return 1;
+}
+
+void add_devices(char *dbname)
+{
+	struct dsd_device *dp;
+
+	/* whatever is currently in the queue, try to add it to the db */
+	printf("-> Device db: %s\n", dbname);
+
+	for (dp = ddqhead.tqh_first; dp != NULL; dp = dp->entries.tqe_next) {
+		if (!db_lookup(dp->device)) {
+			printf("? device %s already defined, not added\n",
+			       dp->device);
+		} else {
+			printf("\tadding: %s...", dp->device);
+			if (!db_dev_write(dp))
+				printf("done.\n");
+			else
+				printf("failed!\n");
+		}
+	}
+
+	printf("-> Finished with db: %s\n", dbname);
 }
 
 void add_properties(char *dbname)
 {
 	struct dsd_property *qp;
-	struct dsd_property tmp;
 
 	/* whatever is currently in the queue, try to add it to the db */
-	if (db_open(dbname)) {
-		fprintf(stderr, "? cannot open db: %s\n", dbname);
-		exit(1);
-	}
 	printf("-> Property db: %s\n", dbname);
 
 	for (qp = dpqhead.tqh_first; qp != NULL; qp = qp->entries.tqe_next) {
@@ -117,14 +153,13 @@ void add_properties(char *dbname)
 			       qp->property);
 		} else {
 			printf("\tadding: %s...", qp->property);
-			if (!db_write(qp))
+			if (!db_prop_write(qp))
 				printf("done.\n");
 			else
 				printf("failed!\n");
 		}
 	}
 
-	db_close(dbname);
 	printf("-> Finished with db: %s\n", dbname);
 }
 
@@ -152,6 +187,9 @@ void queue_file(char *filename)
 	int doc_ok;
 	struct dsd_property *property = NULL;
 	struct dsd_property_value *value = NULL;
+	enum doc_type doc;
+	struct dsd_device *device = NULL;
+	struct dsd_device_property *dprop = NULL;
 
 	fp = fopen(filename, "r");
 	if (!fp) {
@@ -191,16 +229,19 @@ void queue_file(char *filename)
 		case YAML_DOCUMENT_START_EVENT:
 			state = 0;		/* start state machine */
 			doc_ok = 1;
-			property = malloc(sizeof(struct dsd_property));
-			if (!property) {
-				fprintf(stderr, "? cannot malloc property\n");
-				exit(1);
-			}
-			memset(property, 0, sizeof(struct dsd_property));
+			printf("---\n");
+			doc = DUNNO;
 			break;
 		case YAML_DOCUMENT_END_EVENT:
-			if (doc_ok)
-				TAILQ_INSERT_TAIL(&dpqhead, property, entries);
+			if (doc_ok) {
+				if (doc == DEVDOC)
+					TAILQ_INSERT_TAIL(&ddqhead, device,
+							  entries);
+				else
+					TAILQ_INSERT_TAIL(&dpqhead, property,
+							  entries);
+				doc = DUNNO;
+			}
 			else
 				event.type = YAML_STREAM_END_EVENT;
 			state = 0;
@@ -210,9 +251,12 @@ void queue_file(char *filename)
 			//printf("\t\t-> Sequence Start\n");
 			if (state == 0) {
 				state = 0;
-			} else if (state == 6) {
-				state = 7;
+			} else if (state == 100) {
+				state = 101;
 				TAILQ_INIT(&property->values);
+			} else if (state == 300) {
+				state = 301;
+				TAILQ_INIT(&device->properties);
 			} else {
 				fprintf(stderr, "? expected a sequence\n");
 				event.type = YAML_STREAM_END_EVENT;
@@ -221,20 +265,31 @@ void queue_file(char *filename)
 			break;
 		case YAML_SEQUENCE_END_EVENT:
 			//printf("\t\t-> Sequence End\n");
-			state = 0;
+			if (state == 301)
+				state = 200;
+			else
+				state = 0;
 			break;
 		case YAML_MAPPING_START_EVENT:
 			//printf("\t\t-> Mapping Start\n");
 			if (state == 0) {
 				state = 0;
-			} else if (state == 7) {
-				state = 8;
+			} else if (state == 101) {
+				state = 102;
 				value = malloc(sizeof(struct dsd_property_value));
 				if (!value) {
 					fprintf(stderr, "? cannot malloc property value\n");
 					exit(1);
 				}
 				memset(value, 0, sizeof(struct dsd_property_value));
+			} else if (state == 301) {
+				state = 301;
+				dprop = malloc(sizeof(struct dsd_device_property));
+				if (!dprop) {
+					fprintf(stderr, "? cannot malloc device property\n");
+					exit(1);
+				}
+				memset(dprop, 0, sizeof(struct dsd_property_value));
 			} else {
 				fprintf(stderr, "? expected a token: entry\n");
 				event.type = YAML_STREAM_END_EVENT;
@@ -252,7 +307,45 @@ void queue_file(char *filename)
 				if (!strcasecmp(event.data.scalar.value,
 				    TOK_PROPERTY)) {
 					printf("\tproperty: ");
+					/* start a property document */
+					doc = PROPDOC;
+					property = malloc(
+						sizeof(struct dsd_property));
+					if (!property) {
+						fprintf(stderr,
+						  "? cannot malloc property\n");
+						exit(1);
+					}
+					memset(property, 0,
+					       sizeof(struct dsd_property));
 					state = 1;
+				}
+				else if (!strcasecmp(event.data.scalar.value,
+					 TOK_DEVICE)) {
+					printf("\tdevice: ");
+					if (doc == PROPDOC) {
+						state = 6;
+					} else {
+						/*
+						 * since we just started a
+						 * document, this is a device
+						 * document, not a property
+						 * document, so deal with it
+						 * in a special subset of the
+						 * state machine.
+						 */
+						doc = DEVDOC;
+						device = malloc(
+						    sizeof(struct dsd_device));
+						if (!device) {
+							fprintf(stderr,
+						    "? cannot malloc device\n");
+							exit(1);
+						}
+						memset(device, 0,
+					       	    sizeof(struct dsd_device));
+						state = 201;
+					}
 				}
 				else if (!strcasecmp(event.data.scalar.value,
 					 TOK_DESCRIPTION)) {
@@ -277,7 +370,13 @@ void queue_file(char *filename)
 				else if (!strcasecmp(event.data.scalar.value,
 					 TOK_VALUES)) {
 					printf("\tvalues:\n");
-					state = 6;
+					state = 100;
+				}
+				else {
+					fprintf(stderr,
+						"? unknown keyword: %s\n",
+						event.data.scalar.value);
+					exit(1);
 				}
 				break;
 			case 1:
@@ -310,34 +409,97 @@ void queue_file(char *filename)
 				}
 				state = 0;
 				break;
-			/* case 6-7: see sequence start ... */
-			case 8:
+			case 6:
+				printf("\t%s\n", event.data.scalar.value);
+				set_value(&property->device, &event);
+				if (db_dev_lookup(property->device)) {
+					if (find_dev(property->device)) {
+						fprintf(stderr,
+						   "? no such device: %s\n",
+						   property->device);
+						exit(1);
+					}
+				}
+				state = 0;
+				break;
+			/* case 100-101: see sequence start ... */
+			case 102:
 				if (!strcasecmp(event.data.scalar.value,
 				    TOK_TOKEN)) {
 					printf("\t\t- token: ");
-					state = 9;
+					state = 103;
 				} else {
 					state = 0;
 				}
 				break;
-			case 9:
+			case 103:
 				printf("%s\n", event.data.scalar.value);
 				set_value(&value->token, &event);
-				state = 10;
+				state = 104;
 				break;
-			case 10:
+			case 104:
 				if (!strcasecmp(event.data.scalar.value,
 				    TOK_DESCRIPTION)) {
 					printf("\t\t  description: ");
-					state = 11;
+					state = 105;
 				}
 				break;
-			case 11:
+			case 105:
 				printf("%s\n", event.data.scalar.value);
 				set_value(&value->description, &event);
 				TAILQ_INSERT_TAIL(&(property->values),
 						  value, entries);
-				state = 7;
+				state = 101;
+				break;
+			/* states 200-300 are for device documents */
+			case 200:
+				if (!strcasecmp(event.data.scalar.value,
+					 TOK_DESCRIPTION)) {
+					printf("\tdescription: ");
+					state = 202;
+				}
+				else if (!strcasecmp(event.data.scalar.value,
+					 TOK_OWNER)) {
+					printf("\towner: ");
+					state = 203;
+				}
+				else if (!strcasecmp(event.data.scalar.value,
+					 TOK_PROPERTIES)) {
+					printf("\tproperties:\n");
+					state = 300;
+				}
+				break;
+			case 201:
+				printf("%s\n", event.data.scalar.value);
+				set_value(&device->device, &event);
+				state = 200;
+				break;
+			case 202:
+				printf("%s\n", event.data.scalar.value);
+				set_value(&device->description, &event);
+				state = 200;
+				break;
+			case 203:
+				printf("%s\n", event.data.scalar.value);
+				set_value(&device->owner, &event);
+				state = 200;
+				break;
+			/* case 300: see sequence start ... */
+			case 301:
+				printf("\t- %s\n", event.data.scalar.value);
+				dprop = malloc(
+					sizeof(struct dsd_device_property));
+				if (!dprop) {
+					fprintf(stderr,
+					   "? cannot malloc device property\n");
+					exit(1);
+				}
+				memset(dprop, 0,
+				       sizeof(struct dsd_device_property));
+				set_value(&dprop->property, &event);
+				TAILQ_INSERT_TAIL(&(device->properties),
+						  dprop, entries);
+				state = 301;
 				break;
 			default:
 				fprintf(stderr, "? internal error, state: %d\n",
@@ -362,6 +524,7 @@ int main(int argc, char *argv[])
 	enum dsd_command command;
 	int ii;
 	struct dsd_property *qp;
+	struct dsd_device *dp;
 
 	/* parameter parsing: 1st arg is always the command */
 	if (argc < 2) {
@@ -370,8 +533,13 @@ int main(int argc, char *argv[])
 	}
 
 	TAILQ_INIT(&dpqhead);
+	TAILQ_INIT(&ddqhead);
 
 	command = valid_command(argv[1]);
+	if (strcasecmp(argv[1], CMD_INIT) && db_open(argv[2])) {
+		fprintf(stderr, "? open failed for %s\n", argv[2]);
+		exit(1);
+	}
 	switch (command) {
 	case dsd_add:
 		if (argc < 4) {
@@ -381,24 +549,20 @@ int main(int argc, char *argv[])
 		for (ii = 3; ii < argc; ii++)
 			queue_file(argv[ii]);
 		add_properties(argv[2]);
+		add_devices(argv[2]);
 		break;
 
 	case dsd_delete:
 		if (argc < 4) {
-			fprintf(stderr, "? a db and property are required\n");
-			exit(1);
-		}
-		if (db_open(argv[2])) {
-			fprintf(stderr, "? open failed for %s\n", argv[2]);
+			fprintf(stderr, "? a db and name are required\n");
 			exit(1);
 		}
 		for (ii = 3; ii < argc; ii++) {
 			if (db_lookup(argv[ii]))
-				printf("property not found: %s\n", argv[ii]);
+				printf("entry not found: %s\n", argv[ii]);
 			else
 				db_delete(argv[ii]);
 		}
-		db_close(argv[2]);
 		break;
 
 	case dsd_help:
@@ -422,30 +586,31 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "? a db is required\n");
 			exit(1);
 		}
-		if (db_open(argv[2])) {
-			fprintf(stderr, "? open failed for %s\n", argv[2]);
-			exit(1);
+		if (argc >= 3) {
+			if (argc == 3)
+				db_list();
+			else if (strcasecmp(argv[3], SUBCMD_DEVS) == 0)
+				db_dev_list();
+			else if (strcasecmp(argv[3], SUBCMD_PROPS) == 0)
+				db_prop_list();
+			else {
+				fprintf(stderr, "? ignoring extra values\n");
+				db_list();
+			}
 		}
-		db_list();
-		db_close(argv[2]);
 		break;
 
 	case dsd_lookup:
 		if (argc < 4) {
-			fprintf(stderr, "? a db and property are required\n");
-			exit(1);
-		}
-		if (db_open(argv[2])) {
-			fprintf(stderr, "? open failed for %s\n", argv[2]);
+			fprintf(stderr, "? a db and property or device are required\n");
 			exit(1);
 		}
 		for (ii = 3; ii < argc; ii++) {
 			if (db_lookup(argv[ii]))
-				printf("property not found: %s\n", argv[ii]);
+				printf("entry not found: %s\n", argv[ii]);
 			else
 				db_cat(argv[ii]);
 		}
-		db_close(argv[2]);
 		break;
 
 	default:
@@ -454,11 +619,18 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	db_close(argv[2]);
 	while (dpqhead.tqh_first != NULL) {
 		qp = dpqhead.tqh_first;
 		TAILQ_REMOVE(&dpqhead, dpqhead.tqh_first, entries);
 		free(qp);
 	}
+	while (ddqhead.tqh_first != NULL) {
+		dp = ddqhead.tqh_first;
+		TAILQ_REMOVE(&ddqhead, ddqhead.tqh_first, entries);
+		free(dp);
+	}
+
 
 	return 0;
 }

@@ -39,11 +39,17 @@
 #define CMD_LIST	"list"
 #define CMD_LOOKUP	"lookup"
 
+#define SUBCMD_ALL	"all"
+#define SUBCMD_DEVS	"devs"
+#define SUBCMD_PROPS	"props"
+
 #define TOK_DESCRIPTION	"description"
 #define TOK_EXAMPLE	"example"
 
+#define TOK_DEVICE	"device"
 #define TOK_OWNER	"owner"
 #define TOK_PROPERTY	"property"
+#define TOK_PROPERTIES	"properties"
 #define TOK_TOKEN	"token"
 #define TOK_TYPE	"type"
 #define TOK_VALUES	"values"
@@ -76,10 +82,27 @@ struct dsd_property {
 	char	*property;
 	char	*type;
 	char	*owner;
+	char	*device;
 	char	*description;
 	char	*example;
 	TAILQ_HEAD(dsd_property_value_head, dsd_property_value) values;
 	TAILQ_ENTRY(dsd_property) entries;
+};
+
+TAILQ_HEAD(dsd_device_queue_head, dsd_device) ddqhead;
+extern struct dsd_device_queue_head *ddqheadp;
+
+struct dsd_device_property {
+	char	*property;
+	TAILQ_ENTRY(dsd_device_property) entries;
+};
+
+struct dsd_device {
+	char	*device;
+	char	*owner;
+	char	*description;
+	TAILQ_HEAD(dsd_device_property_head, dsd_device_property) properties;
+	TAILQ_ENTRY(dsd_device) entries;
 };
 
 #endif
