@@ -30,7 +30,7 @@
 all:
 	make -C tools
 
-install:
+install: all
 	make -C tools install
 
 clean:
