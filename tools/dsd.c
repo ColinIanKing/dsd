@@ -168,7 +168,7 @@ void set_value(char **field, yaml_event_t *event)
 	int len;
 
 	len = (event->data.scalar.length < sizeof(int)) ?
-			sizeof(int) : event->data.scalar.length;
+			sizeof(int) : event->data.scalar.length + 1;
 	*field = malloc(len);
 	if (!(*field)) {
 		fprintf(stderr, "? no malloc space\n");
