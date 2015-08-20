@@ -299,6 +299,7 @@ struct dsd_property *parse_prop_doc(char *buf)
 		case YAML_DOCUMENT_START_EVENT:
 			/* start a property document */
 			printf("---\n");
+			doc_ok = 1;
 			property = malloc(sizeof(struct dsd_property));
 			if (!property) {
 				fprintf(stderr, "? cannot malloc property\n");
