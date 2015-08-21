@@ -492,7 +492,7 @@ void check_devs(struct dsd_device_queue_head *headp)
 			     dpp != NULL; dpp = dpp->entries.tqe_next) {
 			        //printf("p: %s\n", dpp->property);
 				if (db_prop_lookup(dpp->property)) {
-					printf("E: device %s uses undefined property %s\n", dp->device, dpp->property);
+					printf("E: device %s refers to undefined property %s\n", dp->device, dpp->property);
 				}
 			}
 		}
@@ -524,7 +524,7 @@ void check_props(struct dsd_property_queue_head *headp)
 			for (dnp = pp->devices.tqh_first;
 			     dnp != NULL; dnp = dnp->entries.tqe_next) {
 				if (db_dev_lookup(dnp->name))
-					printf("E: property %s uses undefined device %s\n", pp->property, dnp->name);
+					printf("E: property %s refers to undefined device %s\n", pp->property, dnp->name);
 			}
 		}
 	}
@@ -564,25 +564,26 @@ int db_verify(char *dirname)
 		fprintf(stderr, "? cannot open device db directory\n");
 		exit(1);
 	}
+	printf("reading in devices...");
 	dep = readdir(dirp);
 	while (dep) {
 		if (strcmp(dep->d_name, ".") && strcmp(dep->d_name, "..")) {
-			printf("reading device: %s...", dep->d_name);
 			devdb = build_dev_path(dep->d_name);
 			if (!stash_file(devdb, &buf)) {
 				dev = parse_dev_doc(buf, 0);
-				if (dev) {
+				if (dev)
 					TAILQ_INSERT_TAIL(&dhead, dev, entries);
-					printf("done.\n");
-				}
 				else
-					fprintf(stderr, "? dev read failed\n");
+					fprintf(stderr,
+						"\n? device read failed: %s\n",
+						dep->d_name);
 			}
 			free_path(devdb);
 		}
 		dep = readdir(dirp);
 	}
 	closedir(dirp);
+	printf("done.\n");
 
 	/* now build a list of properties */
 	propdb = build_prop_path(NULL);
@@ -592,29 +593,26 @@ int db_verify(char *dirname)
 		fprintf(stderr, "? cannot open property db directory\n");
 		exit(1);
 	}
-
+	printf("reading properties...");
 	dep = readdir(dirp);
 	while (dep) {
 		if (strcmp(dep->d_name, ".") && strcmp(dep->d_name, "..")) {
-			printf("reading property: %s...", dep->d_name);
 			propdb = build_prop_path(dep->d_name);
 			if (!stash_file(propdb, &buf)) {
 				prop = parse_prop_doc(buf, 0);
-				if (prop) {
+				if (prop)
 					TAILQ_INSERT_TAIL(&phead, prop,
 							  entries);
-					printf("done.\n");
-				}
-				else {
-					fprintf(stderr, "? prop read failed\n");
-					printf("failed.\n");
-				}
+				else
+					fprintf(stderr,
+					      "\n? property read failed: %s\n",
+					      dep->d_name);
 			}
 		}
 		dep = readdir(dirp);
 	}
-
 	closedir(dirp);
+	printf("done.\n");
 
 	check_devs(&dhead);
 	check_props(&phead);
