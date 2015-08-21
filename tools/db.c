@@ -170,11 +170,16 @@ int db_dev_lookup(char *name)
 		exit(1);
 	}
 
-	stat(path, &sb);
-	free_path(path);
-	if (!S_ISREG(sb.st_mode))
+	if (stat(path, &sb)) {
+		free_path(path);
 		return 1;
+	}
+	if (!S_ISREG(sb.st_mode)) {
+		free_path(path);
+		return 1;
+	}
 
+	free_path(path);
 	return 0;
 }
 
@@ -190,11 +195,16 @@ int db_prop_lookup(char *name)
 		exit(1);
 	}
 
-	stat(path, &sb);
-	free_path(path);
-	if (!S_ISREG(sb.st_mode))
+	if (stat(path, &sb)) {
+		free_path(path);
 		return 1;
+	}
+	if (!S_ISREG(sb.st_mode)) {
+		free_path(path);
+		return 1;
+	}
 
+	free_path(path);
 	return 0;
 }
 
@@ -480,8 +490,10 @@ void check_devs(struct dsd_device_queue_head *headp)
 		else {
 			for (dpp = dp->properties.tqh_first;
 			     dpp != NULL; dpp = dpp->entries.tqe_next) {
-				if (db_prop_lookup(dpp->property))
+			        //printf("p: %s\n", dpp->property);
+				if (db_prop_lookup(dpp->property)) {
 					printf("E: device %s uses undefined property %s\n", dp->device, dpp->property);
+				}
 			}
 		}
 	}
@@ -593,8 +605,10 @@ int db_verify(char *dirname)
 							  entries);
 					printf("done.\n");
 				}
-				else
+				else {
 					fprintf(stderr, "? prop read failed\n");
+					printf("failed.\n");
+				}
 			}
 		}
 		dep = readdir(dirp);

@@ -509,14 +509,6 @@ struct dsd_property *parse_prop_doc(char *buf, int print)
 				memset(dname, 0,
 				       sizeof(struct dsd_device_name));
 				set_value(&dname->name, &event);
-				if (db_dev_lookup(dname->name)) {
-					if (find_dev(dname->name)) {
-						fprintf(stderr,
-						   "? no such device: %s\n",
-						   dname->name);
-						exit(1);
-					}
-				}
 				TAILQ_INSERT_TAIL(&(property->devices),
 						  dname, entries);
 				state = 201;
