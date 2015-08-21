@@ -87,6 +87,7 @@ void usage(char *cmd)
 	fprintf(stderr, "\t           each a device or property name to\n");
 	fprintf(stderr, "\t           to look for in <dbname>; if found,\n");
 	fprintf(stderr, "\t           their info will be written to stdout\n");
+	fprintf(stderr, "\tverify  => run all content checks on a db\n");
 }
 
 void add_devices(char *dbname)
