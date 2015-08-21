@@ -45,6 +45,11 @@ int db_prop_list(void);				/* list all properties */
 int db_prop_lookup(char *name);			/* look for property */
 int db_dev_write(struct dsd_device *dev);	/* write a device into db */
 int db_prop_write(struct dsd_property *prop);	/* write a property into db */
+
 int db_verify(char *dirname);			/* check consistency of db */
+int check_device(struct dsd_device *dp);
+int check_devs(struct dsd_device_queue_head *headp);
+int check_property(struct dsd_property *dp);
+int check_props(struct dsd_property_queue_head *headp);
 
 #endif

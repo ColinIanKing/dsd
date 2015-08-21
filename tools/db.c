@@ -473,61 +473,97 @@ int stash_file(char *path, char **buf)
 	return 0;
 }
 
-void check_devs(struct dsd_device_queue_head *headp)
+int check_device(struct dsd_device *dp)
 {
-	struct dsd_device *dp;
 	struct dsd_device_property *dpp;
+	int result = 0;
 
-	for (dp = headp->tqh_first; dp != NULL; dp = dp->entries.tqe_next) {
-		if (strlen(dp->owner) < 1)
-			printf("E: device %s missing an owner\n", dp->device);
-		if (strlen(dp->description) < 1)
-			printf("E: device %s missing a description\n",
-			       dp->device);
-		if (TAILQ_EMPTY(&dp->properties))
-			printf("E: device %s has no properties defined\n",
-			       dp->device);
-		else {
-			for (dpp = dp->properties.tqh_first;
-			     dpp != NULL; dpp = dpp->entries.tqe_next) {
-			        //printf("p: %s\n", dpp->property);
-				if (db_prop_lookup(dpp->property)) {
-					printf("E: device %s refers to undefined property %s\n", dp->device, dpp->property);
-				}
+	if (strlen(dp->owner) < 1) {
+		printf("E: device %s missing an owner\n", dp->device);
+		result = 1;
+	}
+	if (strlen(dp->description) < 1) {
+		printf("E: device %s missing a description\n", dp->device);
+		result = 1;
+	}
+	if (TAILQ_EMPTY(&dp->properties)) {
+		printf("E: device %s has no properties defined\n", dp->device);
+		result = 1;
+	}
+	else {
+		for (dpp = dp->properties.tqh_first;
+		     dpp != NULL; dpp = dpp->entries.tqe_next) {
+			if (db_prop_lookup(dpp->property)) {
+				printf("E: device %s refers to undefined property %s\n", dp->device, dpp->property);
+				result = 1;
 			}
 		}
 	}
+
+	return result;
 }
 
-void check_props(struct dsd_property_queue_head *headp)
+int check_devs(struct dsd_device_queue_head *headp)
 {
-	struct dsd_property *pp;
-	struct dsd_device_name *dnp;
+	struct dsd_device *dp;
+	int result = 0;
 
-	for (pp = headp->tqh_first; pp != NULL; pp = pp->entries.tqe_next) {
-		if (strlen(pp->type) < 1)
-			printf("E: property %s missing an type\n",
-			       pp->property);
-		if (strlen(pp->owner) < 1)
-			printf("E: property %s missing an owner\n",
-			       pp->property);
-		if (strlen(pp->description) < 1)
-			printf("E: property %s missing a description\n",
-			       pp->property);
-		if (strlen(pp->example) < 1)
-			printf("E: property %s missing an example\n",
-			       pp->property);
-		if (TAILQ_EMPTY(&pp->devices))
-			printf("E: property %s used in no devices\n",
-			       pp->property);
-		else {
-			for (dnp = pp->devices.tqh_first;
-			     dnp != NULL; dnp = dnp->entries.tqe_next) {
-				if (db_dev_lookup(dnp->name))
-					printf("E: property %s refers to undefined device %s\n", pp->property, dnp->name);
+	for (dp = headp->tqh_first; dp != NULL; dp = dp->entries.tqe_next) {
+		if (check_device(dp))
+			result = 1;
+	}
+
+	return result;
+}
+
+int check_property(struct dsd_property *pp)
+{
+	struct dsd_device_name *dnp;
+	int result = 0;
+
+	if (strlen(pp->type) < 1) {
+		printf("E: property %s missing an type\n", pp->property);
+		result = 1;
+	}
+	if (strlen(pp->owner) < 1) {
+		printf("E: property %s missing an owner\n", pp->property);
+		result = 1;
+	}
+	if (strlen(pp->description) < 1) {
+		printf("E: property %s missing a description\n", pp->property);
+		result = 1;
+	}
+	if (strlen(pp->example) < 1) {
+		printf("E: property %s missing an example\n", pp->property);
+		result = 1;
+	}
+	if (TAILQ_EMPTY(&pp->devices)) {
+		printf("E: property %s used in no devices\n", pp->property);
+		result = 1;
+	}
+	else {
+		for (dnp = pp->devices.tqh_first;
+		     dnp != NULL; dnp = dnp->entries.tqe_next) {
+			if (db_dev_lookup(dnp->name)) {
+				printf("E: property %s refers to undefined device %s\n", pp->property, dnp->name);
+				result = 1;
 			}
 		}
 	}
+
+	return result;
+}
+
+int check_props(struct dsd_property_queue_head *headp)
+{
+	struct dsd_property *pp;
+	int result = 0;
+
+	for (pp = headp->tqh_first; pp != NULL; pp = pp->entries.tqe_next)
+		if (check_property(pp))
+			result = 1;
+
+	return result;
 }
 
 int db_verify(char *dirname)
@@ -614,8 +650,8 @@ int db_verify(char *dirname)
 	closedir(dirp);
 	printf("done.\n");
 
-	check_devs(&dhead);
-	check_props(&phead);
+	if (check_devs(&dhead) || check_props(&phead))
+		return 1;
 
 	return 0;
 }
