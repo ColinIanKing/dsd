@@ -1,5 +1,5 @@
-#ifndef __LOCAL_VERSION_H
-#define __LOCAL_VERSION_H
+#ifndef __LOCAL_OUTPUT_H
+#define __LOCAL_OUTPUT_H
 /******************************************************************************
  * The MIT License (MIT)
  *
@@ -30,6 +30,6 @@
  ******************************************************************************
  */
 
-#define VERSION		"0.2.21"
+extern int simple_text(char *name);
 
 #endif

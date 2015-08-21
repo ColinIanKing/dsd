@@ -31,8 +31,8 @@ CC	= gcc
 CFLAGS	= -g
 LIBS	= -lyaml
 
-dsd: dsd.o db.o parse.o
-	$(CC) $(CFLAGS) -o dsd dsd.o db.o parse.o $(LIBS)
+dsd: dsd.o db.o parse.o output.o
+	$(CC) $(CFLAGS) -o dsd dsd.o db.o parse.o output.o $(LIBS)
 
 dsd.o: dsd.h db.h version.h dsd.c
 	$(CC) $(CFLAGS) -c dsd.c
@@ -42,6 +42,9 @@ db.o: dsd.h db.h db.c
 
 parse.o: dsd.h parse.h parse.c
 	$(CC) $(CFLAGS) -c parse.c
+
+output.o: db.h dsd.h parse.h output.c
+	$(CC) $(CFLAGS) -c output.c
 
 install: dsd
 	cp dsd ..

@@ -52,4 +52,7 @@ int check_devs(struct dsd_device_queue_head *headp);
 int check_property(struct dsd_property *dp);
 int check_props(struct dsd_property_queue_head *headp);
 
+struct dsd_device *db_get_device(char *name);
+struct dsd_property *db_get_property(char *name);
+
 #endif

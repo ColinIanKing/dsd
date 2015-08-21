@@ -39,6 +39,7 @@
 #define CMD_LIST	"list"
 #define CMD_LOOKUP	"lookup"
 #define CMD_PARSE	"parse"
+#define CMD_SIMPLE_TEXT	"simple-text"
 #define CMD_VERIFY	"verify"
 
 #define SUBCMD_ALL	"all"
@@ -53,6 +54,7 @@ enum dsd_command {
 	dsd_list,
 	dsd_lookup,
 	dsd_parse,
+	dsd_simple_text,
 	dsd_verify,
 	dsd_undefined
 };

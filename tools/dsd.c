@@ -38,6 +38,7 @@
 #include "dsd.h"
 #include "db.h"
 #include "parse.h"
+#include "output.h"
 #include "version.h"
 
 struct dsd_property_queue_head *dpqheadp;
@@ -59,6 +60,8 @@ enum dsd_command valid_command(char *cmd)
 		return dsd_lookup;
 	if (!strcasecmp(cmd, CMD_PARSE))
 		return dsd_parse;
+	if (!strcasecmp(cmd, CMD_SIMPLE_TEXT))
+		return dsd_simple_text;
 	if (!strcasecmp(cmd, CMD_VERIFY))
 		return dsd_verify;
 
@@ -89,10 +92,17 @@ void usage(char *cmd)
 	fprintf(stderr, "\t           each a device or property name to\n");
 	fprintf(stderr, "\t           to look for in <dbname>; if found,\n");
 	fprintf(stderr, "\t           their info will be written to stdout\n");
+	fprintf(stderr, "\t           in YAML format\n");
 	fprintf(stderr, "\tparse   => one or more <value>s are required,\n");
 	fprintf(stderr, "\t           each a file name containing entries\n");
 	fprintf(stderr, "\t           to check for correctness ONLY (they\n");
 	fprintf(stderr, "\t           will not be added to the db)\n");
+	fprintf(stderr, "\tsimple-text =>\n");
+	fprintf(stderr, "\t           one or more <value>s are required,\n");
+	fprintf(stderr, "\t           each a device or property name to\n");
+	fprintf(stderr, "\t           to look for in <dbname>; if found,\n");
+	fprintf(stderr, "\t           their info will be written to stdout\n");
+	fprintf(stderr, "\t           in a simple text format\n");
 	fprintf(stderr, "\tverify  => run all content checks on a db\n");
 }
 
@@ -380,6 +390,15 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 		db_verify(argv[2]);
+		break;
+
+	case dsd_simple_text:
+		if (argc < 4) {
+			fprintf(stderr, "? a db and a name are required\n");
+			exit(1);
+		}
+		for (ii = 3; ii < argc; ii++)
+			simple_text(argv[ii]);
 		break;
 
 	default:

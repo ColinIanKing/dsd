@@ -448,7 +448,7 @@ int db_list(void)
 	return 0;
 }
 
-int stash_file(char *path, char **buf)
+int db_get_file(char *path, char **buf)
 {
 	FILE *fp;
 	size_t len;
@@ -566,13 +566,40 @@ int check_props(struct dsd_property_queue_head *headp)
 	return result;
 }
 
+struct dsd_device *db_get_device(char *name)
+{
+	char *devdb;
+	struct dsd_device *dev = NULL;
+	char *buf;
+
+	devdb = build_dev_path(name);
+	if (!db_get_file(devdb, &buf))
+		dev = parse_dev_doc(buf, 0);
+
+	free_path(devdb);
+	return dev;
+}
+
+struct dsd_property *db_get_property(char *name)
+{
+	char *propdb;
+	struct dsd_property *prop = NULL;
+	char *buf;
+
+	propdb = build_prop_path(name);
+	if (!db_get_file(propdb, &buf))
+		prop = parse_prop_doc(buf, 0);
+
+	free_path(propdb);
+	return prop;
+}
+
 int db_verify(char *dirname)
 {
 	DIR *dirp;
 	struct dirent *dep;
 	char *devdb;
 	char *propdb;
-	char *buf;
 	int resd, resp;
 	struct dsd_device *dev;
 	struct dsd_property *prop;
@@ -605,17 +632,13 @@ int db_verify(char *dirname)
 	dep = readdir(dirp);
 	while (dep) {
 		if (strcmp(dep->d_name, ".") && strcmp(dep->d_name, "..")) {
-			devdb = build_dev_path(dep->d_name);
-			if (!stash_file(devdb, &buf)) {
-				dev = parse_dev_doc(buf, 0);
-				if (dev)
-					TAILQ_INSERT_TAIL(&dhead, dev, entries);
-				else
-					fprintf(stderr,
-						"\n? device read failed: %s\n",
-						dep->d_name);
-			}
-			free_path(devdb);
+			dev = db_get_device(dep->d_name);
+			if (dev)
+				TAILQ_INSERT_TAIL(&dhead, dev, entries);
+			else
+				fprintf(stderr,
+					"\n? device read failed: %s\n",
+					dep->d_name);
 		}
 		dep = readdir(dirp);
 	}
@@ -634,17 +657,13 @@ int db_verify(char *dirname)
 	dep = readdir(dirp);
 	while (dep) {
 		if (strcmp(dep->d_name, ".") && strcmp(dep->d_name, "..")) {
-			propdb = build_prop_path(dep->d_name);
-			if (!stash_file(propdb, &buf)) {
-				prop = parse_prop_doc(buf, 0);
-				if (prop)
-					TAILQ_INSERT_TAIL(&phead, prop,
-							  entries);
-				else
-					fprintf(stderr,
-					      "\n? property read failed: %s\n",
-					      dep->d_name);
-			}
+			prop = db_get_property(dep->d_name);
+			if (prop)
+				TAILQ_INSERT_TAIL(&phead, prop, entries);
+			else
+				fprintf(stderr,
+				      "\n? property read failed: %s\n",
+				      dep->d_name);
 		}
 		dep = readdir(dirp);
 	}
@@ -659,3 +678,4 @@ int db_verify(char *dirname)
 
 	return 0;
 }
+
