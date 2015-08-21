@@ -1,0 +1,10 @@
+property: max-transfer-unit
+type: hexadecimal-integer
+owner: Al Stone <ahs3@redhat.com>
+devices:
+    - generic-nic
+description: |
+    Specifies the MTU (IEEE defined maximum transfer unit)
+    supported by the device
+example: |
+    Package (2) { "max-transfer-unit", 5dc }   // MTU of 1500

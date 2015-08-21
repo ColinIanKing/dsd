@@ -1,0 +1,9 @@
+property: phy-channel
+type: hexadecimal-integer
+owner: Al Stone <ahs3@redhat.com>
+devices:
+    - generic-nic
+description: |
+    If present, defines the PHY channel to be used by this device.
+example: |
+    Package (2) { "phy-channel", 3 }

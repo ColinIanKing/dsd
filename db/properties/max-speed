@@ -1,0 +1,10 @@
+property: max-speed
+type: hexadecimal-integer
+owner: Al Stone <ahs3@redhat.com>
+devices:
+    - generic-nic
+description: |
+    Specifies the maximum speed in Mbits/second supported by
+    the device
+example: |
+    Package (2) { "max-speed", 3e8 }   // 1000 Mbps
