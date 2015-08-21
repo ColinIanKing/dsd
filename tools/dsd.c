@@ -281,7 +281,8 @@ int main(int argc, char *argv[])
 	TAILQ_INIT(&ddqhead);
 
 	command = valid_command(argv[1]);
-	if (strcasecmp(argv[1], CMD_INIT) && db_open(argv[2])) {
+	if ((strcasecmp(argv[1], CMD_HELP) && strcasecmp(argv[1], CMD_INIT)) &&
+	    db_open(argv[2])) {
 		fprintf(stderr, "? open failed for %s\n", argv[2]);
 		exit(1);
 	}
