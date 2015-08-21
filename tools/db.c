@@ -38,8 +38,9 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 
-#include "dsd.h"
 #include "db.h"
+#include "dsd.h"
+#include "parse.h"
 
 #define PROPS		"properties"
 #define DEVS		"devices"
@@ -227,21 +228,15 @@ int db_dev_write(struct dsd_device *dev)
 	if (dev->owner)
 		fprintf(fp, "owner: %s\n", dev->owner);
 
-	if (dev->description) {
-		fprintf(fp, "description: |\n");
-		tmp = strtok(dev->description, "\n");
-		while (tmp) {
-			fprintf(fp, "\t%s\n", tmp);
-			tmp = strtok(NULL, "\n");
-		}
-	}
+	if (dev->description)
+		fprintf(fp, "description: %s\n", dev->description);
 
 	if (!TAILQ_EMPTY(&dev->properties)) {
 		struct dsd_device_property *dvp;
 
 		fprintf(fp, "properties:\n");
 		TAILQ_FOREACH(dvp, &dev->properties, entries) {
-			fprintf(fp, "\t- %s\n", dvp->property);
+			fprintf(fp, "    - %s\n", dvp->property);
 		}
 	}
 
@@ -277,7 +272,7 @@ int db_prop_write(struct dsd_property *prop)
 
 		fprintf(fp, "devices:\n");
 		TAILQ_FOREACH(dnp, &prop->devices, entries) {
-			fprintf(fp, "\t- %s\n", dnp->name);
+			fprintf(fp, "    - %s\n", dnp->name);
 		}
 	}
 
@@ -285,7 +280,7 @@ int db_prop_write(struct dsd_property *prop)
 		fprintf(fp, "description: |\n");
 		tmp = strtok(prop->description, "\n");
 		while (tmp) {
-			fprintf(fp, "\t%s\n", tmp);
+			fprintf(fp, "    %s\n", tmp);
 			tmp = strtok(NULL, "\n");
 		}
 	}
@@ -294,7 +289,7 @@ int db_prop_write(struct dsd_property *prop)
 		fprintf(fp, "example: |\n");
 		tmp = strtok(prop->example, "\n");
 		while (tmp) {
-			fprintf(fp, "\t%s\n", tmp);
+			fprintf(fp, "    %s\n", tmp);
 			tmp = strtok(NULL, "\n");
 		}
 	}
@@ -304,8 +299,8 @@ int db_prop_write(struct dsd_property *prop)
 
 		fprintf(fp, "values:\n");
 		TAILQ_FOREACH(pvp, &prop->values, entries) {
-			fprintf(fp, "\t- token: %s\n", pvp->token);
-			fprintf(fp, "\t  description: %s\n", pvp->description);
+			fprintf(fp, "    - token: %s\n", pvp->token);
+			fprintf(fp, "      description: %s\n", pvp->description);
 		}
 	}
 
@@ -443,3 +438,172 @@ int db_list(void)
 	return 0;
 }
 
+int stash_file(char *path, char **buf)
+{
+	FILE *fp;
+	size_t len;
+	struct stat sb;
+
+	/* read the file into buf */
+	fp = fopen(path, "r");
+	if (!fp) {
+		fprintf(stderr, "? no such entry: %s\n", path);
+		return 1;
+	}
+	stat(path, &sb);
+	len = sb.st_size;
+
+	*buf = malloc(len + 1);
+	if (!(*buf))
+		return 1;
+	memset(*buf, 0, len + 1);
+	fread(*buf, 1, len, fp);
+
+	fclose(fp);
+	return 0;
+}
+
+void check_devs(struct dsd_device_queue_head *headp)
+{
+	struct dsd_device *dp;
+	struct dsd_device_property *dpp;
+
+	for (dp = headp->tqh_first; dp != NULL; dp = dp->entries.tqe_next) {
+		if (strlen(dp->owner) < 1)
+			printf("E: device %s missing an owner\n", dp->device);
+		if (strlen(dp->description) < 1)
+			printf("E: device %s missing a description\n",
+			       dp->device);
+		if (TAILQ_EMPTY(&dp->properties))
+			printf("E: device %s has no properties defined\n",
+			       dp->device);
+		else {
+			for (dpp = dp->properties.tqh_first;
+			     dpp != NULL; dpp = dpp->entries.tqe_next) {
+				if (db_prop_lookup(dpp->property))
+					printf("E: device %s uses undefined property %s\n", dp->device, dpp->property);
+			}
+		}
+	}
+}
+
+void check_props(struct dsd_property_queue_head *headp)
+{
+	struct dsd_property *pp;
+	struct dsd_device_name *dnp;
+
+	for (pp = headp->tqh_first; pp != NULL; pp = pp->entries.tqe_next) {
+		if (strlen(pp->type) < 1)
+			printf("E: property %s missing an type\n",
+			       pp->property);
+		if (strlen(pp->owner) < 1)
+			printf("E: property %s missing an owner\n",
+			       pp->property);
+		if (strlen(pp->description) < 1)
+			printf("E: property %s missing a description\n",
+			       pp->property);
+		if (strlen(pp->example) < 1)
+			printf("E: property %s missing an example\n",
+			       pp->property);
+		if (TAILQ_EMPTY(&pp->devices))
+			printf("E: property %s used in no devices\n",
+			       pp->property);
+		else {
+			for (dnp = pp->devices.tqh_first;
+			     dnp != NULL; dnp = dnp->entries.tqe_next) {
+				if (db_dev_lookup(dnp->name))
+					printf("E: property %s uses undefined device %s\n", pp->property, dnp->name);
+			}
+		}
+	}
+}
+
+int db_verify(char *dirname)
+{
+	DIR *dirp;
+	struct dirent *dep;
+	char *devdb;
+	char *propdb;
+	char *buf;
+	struct dsd_device *dev;
+	struct dsd_property *prop;
+
+	struct dsd_device_queue_head dhead;
+	struct dsd_property_queue_head phead;
+
+	/*
+	 * Check the data base for several things:
+	 * (1) devices or properties that are missing info
+	 * (2) devices that refer to properties that are not defined
+	 * (3) properties that refer to devices that are not defined
+	 */
+	if (!dbname) {
+		fprintf(stderr, "? must open db first\n");
+		exit(1);
+	}
+	TAILQ_INIT(&dhead);
+	TAILQ_INIT(&phead);
+
+	/* build list of devices first */
+	devdb = build_dev_path(NULL);
+	dirp = opendir(devdb);
+	free_path(devdb);
+	if (!dirp) {
+		fprintf(stderr, "? cannot open device db directory\n");
+		exit(1);
+	}
+	dep = readdir(dirp);
+	while (dep) {
+		if (strcmp(dep->d_name, ".") && strcmp(dep->d_name, "..")) {
+			printf("reading device: %s...", dep->d_name);
+			devdb = build_dev_path(dep->d_name);
+			if (!stash_file(devdb, &buf)) {
+				dev = parse_dev_doc(buf, 0);
+				if (dev) {
+					TAILQ_INSERT_TAIL(&dhead, dev, entries);
+					printf("done.\n");
+				}
+				else
+					fprintf(stderr, "? dev read failed\n");
+			}
+			free_path(devdb);
+		}
+		dep = readdir(dirp);
+	}
+	closedir(dirp);
+
+	/* now build a list of properties */
+	propdb = build_prop_path(NULL);
+	dirp = opendir(propdb);
+	free_path(propdb);
+	if (!dirp) {
+		fprintf(stderr, "? cannot open property db directory\n");
+		exit(1);
+	}
+
+	dep = readdir(dirp);
+	while (dep) {
+		if (strcmp(dep->d_name, ".") && strcmp(dep->d_name, "..")) {
+			printf("reading property: %s...", dep->d_name);
+			propdb = build_prop_path(dep->d_name);
+			if (!stash_file(propdb, &buf)) {
+				prop = parse_prop_doc(buf, 0);
+				if (prop) {
+					TAILQ_INSERT_TAIL(&phead, prop,
+							  entries);
+					printf("done.\n");
+				}
+				else
+					fprintf(stderr, "? prop read failed\n");
+			}
+		}
+		dep = readdir(dirp);
+	}
+
+	closedir(dirp);
+
+	check_devs(&dhead);
+	check_props(&phead);
+
+	return 0;
+}

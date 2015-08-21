@@ -57,6 +57,8 @@ enum dsd_command valid_command(char *cmd)
 		return dsd_list;
 	if (!strcasecmp(cmd, CMD_LOOKUP))
 		return dsd_lookup;
+	if (!strcasecmp(cmd, CMD_VERIFY))
+		return dsd_verify;
 
 	return dsd_undefined;
 }
@@ -95,7 +97,7 @@ void add_devices(char *dbname)
 	printf("-> Device db: %s\n", dbname);
 
 	for (dp = ddqhead.tqh_first; dp != NULL; dp = dp->entries.tqe_next) {
-		if (!db_lookup(dp->device)) {
+		if (!db_dev_lookup(dp->device)) {
 			printf("? device %s already defined, not added\n",
 			       dp->device);
 		} else {
@@ -118,7 +120,7 @@ void add_properties(char *dbname)
 	printf("-> Property db: %s\n", dbname);
 
 	for (qp = dpqhead.tqh_first; qp != NULL; qp = qp->entries.tqe_next) {
-		if (!db_lookup(qp->property)) {
+		if (!db_prop_lookup(qp->property)) {
 			printf("? property %s already defined, not added\n",
 			       qp->property);
 		} else {
@@ -211,12 +213,12 @@ void queue_file(char *filename)
 			}
 			fill_buf(fp, begin, end, buf);
 			if (doc == DEVDOC) {
-				device = parse_dev_doc(buf);
+				device = parse_dev_doc(buf, 1);
 				if (device)
 					TAILQ_INSERT_TAIL(&ddqhead, device,
 							  entries);
 			} else if (doc == PROPDOC) {
-				property = parse_prop_doc(buf);
+				property = parse_prop_doc(buf, 1);
 				if (property)
 					TAILQ_INSERT_TAIL(&dpqhead, property,
 							  entries);
@@ -285,6 +287,7 @@ int main(int argc, char *argv[])
 			queue_file(argv[ii]);
 		add_properties(argv[2]);
 		add_devices(argv[2]);
+		db_verify(argv[2]);
 		break;
 
 	case dsd_delete:
@@ -298,6 +301,7 @@ int main(int argc, char *argv[])
 			else
 				db_delete(argv[ii]);
 		}
+		db_verify(argv[2]);
 		break;
 
 	case dsd_help:
@@ -348,6 +352,14 @@ int main(int argc, char *argv[])
 		}
 		break;
 
+	case dsd_verify:
+		if (argc < 3) {
+			fprintf(stderr, "? a db is required\n");
+			exit(1);
+		}
+		db_verify(argv[2]);
+		break;
+
 	default:
 		fprintf(stderr, "? invalid command: %s\n", argv[1]);
 		usage(argv[0]);
@@ -365,7 +377,6 @@ int main(int argc, char *argv[])
 		TAILQ_REMOVE(&ddqhead, ddqhead.tqh_first, entries);
 		free(dp);
 	}
-
 
 	return 0;
 }

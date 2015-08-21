@@ -79,7 +79,7 @@ void set_value(char **field, yaml_event_t *event)
 	strncpy(*field, event->data.scalar.value, event->data.scalar.length);
 }
 
-struct dsd_device *parse_dev_doc(char *buf)
+struct dsd_device *parse_dev_doc(char *buf, int print)
 {
 	yaml_parser_t parser;
 	yaml_event_t event;
@@ -119,7 +119,8 @@ struct dsd_device *parse_dev_doc(char *buf)
 		case YAML_DOCUMENT_START_EVENT:
 			state = 0;		/* start state machine */
 			doc_ok = 1;
-			printf("---\n");
+			if (print)
+				printf("---\n");
 			device = malloc(sizeof(struct dsd_device));
 			if (!device) {
 				fprintf(stderr, "? cannot malloc device\n");
@@ -138,7 +139,6 @@ struct dsd_device *parse_dev_doc(char *buf)
 			break;
 
 		case YAML_SEQUENCE_START_EVENT:
-			//printf("\t\t-> Sequence Start\n");
 			if (state == 100) {
 				state = 101;
 				TAILQ_INIT(&device->properties);
@@ -149,11 +149,9 @@ struct dsd_device *parse_dev_doc(char *buf)
 			}
 			break;
 		case YAML_SEQUENCE_END_EVENT:
-			//printf("\t\t-> Sequence End\n");
 			state = 0;
 			break;
 		case YAML_MAPPING_START_EVENT:
-			//printf("\t\t-> Mapping Start\n");
 			if (state == 0)
 				state = 0;
 			else if (state == 101) {
@@ -168,12 +166,11 @@ struct dsd_device *parse_dev_doc(char *buf)
 				memset(dprop, 0,
 				       sizeof(struct dsd_property_value));
 			} else {
-				fprintf(stderr, "? expected a token: entry\n");
+				fprintf(stderr, "? expected a sequence entry\n");
 				event.type = YAML_STREAM_END_EVENT;
 			}
 			break;
 		case YAML_MAPPING_END_EVENT:
-			//printf("\t\t-> Mapping End\n");
 			break;
 
 		/* data to be used */
@@ -182,22 +179,26 @@ struct dsd_device *parse_dev_doc(char *buf)
 			case 0:
 				if (!strcasecmp(event.data.scalar.value,
 					 TOK_DEVICE)) {
-					printf("\tdevice: ");
+					if (print)
+						printf("\tdevice: ");
 					state = 1;
 				}
 				else if (!strcasecmp(event.data.scalar.value,
 					 TOK_DESCRIPTION)) {
-					printf("\tdescription: ");
+					if (print)
+						printf("\tdescription: ");
 					state = 2;
 				}
 				else if (!strcasecmp(event.data.scalar.value,
 					 TOK_OWNER)) {
-					printf("\towner: ");
+					if (print)
+						printf("\towner: ");
 					state = 3;
 				}
 				else if (!strcasecmp(event.data.scalar.value,
 					 TOK_PROPERTIES)) {
-					printf("\tproperties:\n");
+					if (print)
+						printf("\tproperties:\n");
 					state = 100;
 				}
 				else {
@@ -208,23 +209,29 @@ struct dsd_device *parse_dev_doc(char *buf)
 				}
 				break;
 			case 1:
-				printf("%s\n", event.data.scalar.value);
+				if (print)
+					printf("%s\n", event.data.scalar.value);
 				set_value(&device->device, &event);
 				state = 0;
 				break;
 			case 2:
-				printf("\t%s\n", event.data.scalar.value);
+				if (print)
+					printf("\t%s\n",
+					       event.data.scalar.value);
 				set_value(&device->description, &event);
 				state = 0;
 				break;
 			case 3:
-				printf("%s\n", event.data.scalar.value);
+				if (print)
+					printf("%s\n", event.data.scalar.value);
 				set_value(&device->owner, &event);
 				state = 0;
 				break;
 			/* state 100: see sequence start */
 			case 101:
-				printf("\t\t- %s\n", event.data.scalar.value);
+				if (print)
+					printf("\t\t- %s\n",
+					       event.data.scalar.value);
 				dprop = malloc(
 					sizeof(struct dsd_device_property));
 				if (!dprop) {
@@ -258,7 +265,7 @@ struct dsd_device *parse_dev_doc(char *buf)
 	return retval;
 }
 
-struct dsd_property *parse_prop_doc(char *buf)
+struct dsd_property *parse_prop_doc(char *buf, int print)
 {
 	yaml_parser_t parser;
 	yaml_event_t event;
@@ -298,7 +305,8 @@ struct dsd_property *parse_prop_doc(char *buf)
 		/* block delimiters */
 		case YAML_DOCUMENT_START_EVENT:
 			/* start a property document */
-			printf("---\n");
+			if (print)
+				printf("---\n");
 			doc_ok = 1;
 			property = malloc(sizeof(struct dsd_property));
 			if (!property) {
@@ -320,7 +328,6 @@ struct dsd_property *parse_prop_doc(char *buf)
 			break;
 
 		case YAML_SEQUENCE_START_EVENT:
-			//printf("\t\t-> Sequence Start\n");
 			if (state == 100) {
 				state = 101;
 				TAILQ_INIT(&property->values);
@@ -334,11 +341,9 @@ struct dsd_property *parse_prop_doc(char *buf)
 			}
 			break;
 		case YAML_SEQUENCE_END_EVENT:
-			//printf("\t\t-> Sequence End\n");
 			state = 0;
 			break;
 		case YAML_MAPPING_START_EVENT:
-			//printf("\t\t-> Mapping Start\n");
 			if (state == 0)
 				state = 0;
 			else if (state == 101) {
@@ -365,7 +370,6 @@ struct dsd_property *parse_prop_doc(char *buf)
 			}
 			break;
 		case YAML_MAPPING_END_EVENT:
-			//printf("\t\t-> Mapping End\n");
 			break;
 
 		/* data to be used */
@@ -374,37 +378,44 @@ struct dsd_property *parse_prop_doc(char *buf)
 			case 0:
 				if (!strcasecmp(event.data.scalar.value,
 				    TOK_PROPERTY)) {
-					printf("\tproperty: ");
+					if (print)
+						printf("\tproperty: ");
 					state = 1;
 				}
 				else if (!strcasecmp(event.data.scalar.value,
 					 TOK_DESCRIPTION)) {
-					printf("\tdescription: |\n");
+					if (print)
+						printf("\tdescription: |\n");
 					state = 2;
 				}
 				else if (!strcasecmp(event.data.scalar.value,
 					 TOK_OWNER)) {
-					printf("\towner: ");
+					if (print)
+						printf("\towner: ");
 					state = 3;
 				}
 				else if (!strcasecmp(event.data.scalar.value,
 					 TOK_EXAMPLE)) {
-					printf("\texample: |\n");
+					if (print)
+						printf("\texample: |\n");
 					state = 4;
 				}
 				else if (!strcasecmp(event.data.scalar.value,
 					 TOK_TYPE)) {
-					printf("\ttype: ");
+					if (print)
+						printf("\ttype: ");
 					state = 5;
 				}
 				else if (!strcasecmp(event.data.scalar.value,
 					 TOK_VALUES)) {
-					printf("\tvalues:\n");
+					if (print)
+						printf("\tvalues:\n");
 					state = 100;
 				}
 				else if (!strcasecmp(event.data.scalar.value,
 					 TOK_DEVICES)) {
-					printf("\tdevices:\n");
+					if (print)
+						printf("\tdevices:\n");
 					state = 200;
 				}
 				else {
@@ -415,27 +426,34 @@ struct dsd_property *parse_prop_doc(char *buf)
 				}
 				break;
 			case 1:
-				printf("%s\n", event.data.scalar.value);
+				if (print)
+					printf("%s\n", event.data.scalar.value);
 				set_value(&property->property, &event);
 				state = 0;
 				break;
 			case 2:
-				printf("\t%s\n", event.data.scalar.value);
+				if (print)
+					printf("\t%s\n",
+					       event.data.scalar.value);
 				set_value(&property->description, &event);
 				state = 0;
 				break;
 			case 3:
-				printf("%s\n", event.data.scalar.value);
+				if (print)
+					printf("%s\n", event.data.scalar.value);
 				set_value(&property->owner, &event);
 				state = 0;
 				break;
 			case 4:
-				printf("\t%s\n", event.data.scalar.value);
+				if (print)
+					printf("\t%s\n",
+					       event.data.scalar.value);
 				set_value(&property->example, &event);
 				state = 0;
 				break;
 			case 5:
-				printf("%s\n", event.data.scalar.value);
+				if (print)
+					printf("%s\n", event.data.scalar.value);
 				set_value(&property->type, &event);
 				if (invalid_type(property->type)) {
 					fprintf(stderr, "? invalid type: %s\n",
@@ -448,26 +466,30 @@ struct dsd_property *parse_prop_doc(char *buf)
 			case 102:
 				if (!strcasecmp(event.data.scalar.value,
 				    TOK_TOKEN)) {
-					printf("\t\t- token: ");
+					if (print)
+						printf("\t\t- token: ");
 					state = 103;
 				} else {
 					state = 0;
 				}
 				break;
 			case 103:
-				printf("%s\n", event.data.scalar.value);
+				if (print)
+					printf("%s\n", event.data.scalar.value);
 				set_value(&value->token, &event);
 				state = 104;
 				break;
 			case 104:
 				if (!strcasecmp(event.data.scalar.value,
 				    TOK_DESCRIPTION)) {
-					printf("\t\t  description: ");
+					if (print)
+						printf("\t\t  description: ");
 					state = 105;
 				}
 				break;
 			case 105:
-				printf("%s\n", event.data.scalar.value);
+				if (print)
+					printf("%s\n", event.data.scalar.value);
 				set_value(&value->description, &event);
 				TAILQ_INSERT_TAIL(&(property->values),
 						  value, entries);
@@ -475,7 +497,9 @@ struct dsd_property *parse_prop_doc(char *buf)
 				break;
 			/* case 200: see sequence start ... */
 			case 201:
-				printf("\t\t- %s\n", event.data.scalar.value);
+				if (print)
+					printf("\t\t- %s\n",
+					       event.data.scalar.value);
 				dname = malloc(sizeof(struct dsd_device_name));
 				if (!dname) {
 					fprintf(stderr,

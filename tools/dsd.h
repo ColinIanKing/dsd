@@ -38,6 +38,7 @@
 #define CMD_INIT	"init"
 #define CMD_LIST	"list"
 #define CMD_LOOKUP	"lookup"
+#define CMD_VERIFY	"verify"
 
 #define SUBCMD_ALL	"all"
 #define SUBCMD_DEVS	"devs"
@@ -50,6 +51,7 @@ enum dsd_command {
 	dsd_init,
 	dsd_list,
 	dsd_lookup,
+	dsd_verify,
 	dsd_undefined
 };
 

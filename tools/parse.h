@@ -55,7 +55,7 @@ enum dsd_doc_type {
 	PROPDOC
 };
 
-extern struct dsd_device *parse_dev_doc(char *buf);
-extern struct dsd_property *parse_prop_doc(char *buf);
+extern struct dsd_device *parse_dev_doc(char *buf, int print);
+extern struct dsd_property *parse_prop_doc(char *buf, int print);
 
 #endif
