@@ -573,6 +573,7 @@ int db_verify(char *dirname)
 	char *devdb;
 	char *propdb;
 	char *buf;
+	int resd, resp;
 	struct dsd_device *dev;
 	struct dsd_property *prop;
 
@@ -650,7 +651,10 @@ int db_verify(char *dirname)
 	closedir(dirp);
 	printf("done.\n");
 
-	if (check_devs(&dhead) || check_props(&phead))
+	/* don't let logic shortcuts take over */
+	resd = check_devs(&dhead);
+	resp = check_props(&phead);
+	if (resd || resp)
 		return 1;
 
 	return 0;
