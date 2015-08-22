@@ -351,6 +351,8 @@ int main(int argc, char *argv[])
 				db_dev_list();
 			else if (strcasecmp(argv[3], SUBCMD_PROPS) == 0)
 				db_prop_list();
+			else if (strcasecmp(argv[3], SUBCMD_ALL) == 0)
+				db_list();
 			else {
 				fprintf(stderr, "? ignoring extra values\n");
 				db_list();
