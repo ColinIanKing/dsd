@@ -7,8 +7,8 @@ allowed via the _DSD method in ACPI [0] -- and in Device Tree (DT).
 
 The issue is that there is a desire to share device properties not only
 across devices (e.g., is more than one "mac-address" really needed?), but
-between the users of ACPI via _DSD, and  theusers of Device Tree (DT), where
-the key-value model is used extensively.  
+between the users of ACPI via _DSD, and possibly the users of Device Tree
+(DT), where the key-value model is used extensively.  
 
 While DT documentation seems to be reasonably well cared for (at least in
 the Linux kernel documentation) and there is a process for maintaining the
@@ -30,9 +30,10 @@ location and format for the definition of these properties, so that anyone
 that needs to can easily get to them, register new ones, or share existing
 properties.
 
-Each device property is described in YAML (examples and details below).  At
-present, a directory contains the YAML, with one file per device property, 
-and acts as a very crude "data base" for all of the entries.  The dsd command
+Each device property is described in YAML (examples below, with details in
+the file called YAML).  At present, a directory contains the YAML, with one
+file per device property, one file per device using those properties, and
+acts as a very crude "data base" for all of the entries.  The dsd command
 provides several functions for dealing with this "data base" of device
 properties:
 
