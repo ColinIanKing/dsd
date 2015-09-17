@@ -1,0 +1,41 @@
+Participating in the Project
+============================
+
+Becoming a Reviewer
+===================
+Anybody who is member of the dsd@acpica.org mailing list can act
+as a reviewer.  Approving of a proposal is indicated by providing
+a "Reviewed-by:" tag in an email reply; e.g.:
+
+   Reviewed-by: Some Person <fancy.address@someplace.org>
+
+
+Becoming a Maintainer
+=====================
+_DSD maintainership is a meritocracy. The process is:
+
+   1. A contributor submits a request to dsd@acpica.org and asks to
+      become a maintainer.
+
+   2. Existing maintainers examine the merit of the request based on
+      the track record of the individual making the request, considering
+      several factors:
+   
+      2.1 OS vendors (e.g., FreeBSD, Red Hat, or Microsoft) may propose
+          a maintainer.
+
+      2.2 Existing firmware representation technologies: i.e., the person
+          is a known ACPI contributor or Device Tree contributor or 
+	  maintainer.
+
+      2.3 Any past experience with the dsd@acpica.org mailing list and
+          its membership.
+
+   3. Based on their examination, the existing maintainers will reach a
+      decision and inform the requestor.
+
+
+
+Contributors:
+   Charles Garcia-Tobin <charles.garcia-tobin@arm.com>
+   Al Stone <ahs3@redhat.com>
