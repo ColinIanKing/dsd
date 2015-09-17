@@ -1,0 +1,71 @@
+Submitting Device Property Definitions
+======================================
+If you wish to have a device property definition included in the database
+of known definitions, please email the proposed definition to dsd@acpica.org.
+
+The emailed proposal will then be subject to review by any and all reviewers
+and maintainers responsible for maintaining the database.  If the maintainers
+agree that the proposal is sufficient, they will provide "Acked-by:" replies
+and incorporate the new definition into the database.
+
+Proposals must be submitted in one of two formats:
+
+   1) A complete formal definition of a new device property (please see
+      the file documentation/language.txt for all the details of the formal
+      language to use), or
+
+   2) A patch (using "diff -Naur") to an existing device property.  The
+      database is formatted in such a way to make this possible.
+
+In either case, please describe what the proposal is for, and why it
+is needed.
+
+All proposals submitted must contain a "Signed-off-by:" as part of the
+commentary describing the proposal.  This is described by the following
+excerpt from the Linux kernel documenation; we will follow the same
+basic rules:
+
+   The sign-off is a simple line at the end of the explanation for the
+   patch, which certifies that you wrote it or otherwise have the right to
+   pass it on as an open-source patch.  The rules are pretty simple: if you
+   can certify the below:
+   
+           Developer's Certificate of Origin 1.1
+   
+           By making a contribution to this project, I certify that:
+   
+           (a) The contribution was created in whole or in part by me and I
+               have the right to submit it under the open source license
+               indicated in the file; or
+   
+           (b) The contribution is based upon previous work that, to the best
+               of my knowledge, is covered under an appropriate open source
+               license and I have the right under that license to submit that
+               work with modifications, whether created in whole or in part
+               by me, under the same open source license (unless I am
+               permitted to submit under a different license), as indicated
+               in the file; or
+   
+           (c) The contribution was provided directly to me by some other
+               person who certified (a), (b) or (c) and I have not modified
+               it.
+   
+           (d) I understand and agree that this project and the contribution
+               are public and that a record of the contribution (including all
+               personal information I submit with it, including my sign-off) is
+               maintained indefinitely and may be redistributed consistent with
+               this project or the open source license(s) involved.
+   
+   then you just add a line saying
+   
+   	Signed-off-by: Random J Developer <random@developer.example.org>
+   
+   using your real name (sorry, no pseudonyms or anonymous contributions.)
+   
+
+Linux kernel documentation:
+   Excerpt is from Documentation/SubmittingPatches
+
+Contributors:
+   Darren Hart <darren.hart@intel.com>
+   Al Stone <ahs3@redhat.com>
