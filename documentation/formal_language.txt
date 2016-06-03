@@ -1,6 +1,6 @@
 ﻿_DSD Formal Language Ruleset
 ============================
-Dated:	2016-05-31
+Dated:	2016-06-03
 Status:	DRAFT
 
 
@@ -124,6 +124,8 @@ database of device properties are documented independently [3].
     <reviewers> ::= <reviewed-by> | <reviewed-by> <reviewers>
     <reviewed-by> ::= "reviewed-by" ":" <person> <EOL>
 
+    A <name> may not include an <EOL>, commas (",") or slashes ("/").
+
     A property set can be "abstract", a "subset", or a "definition."
     A definition has no ambiguity: we know precisely where to put the
     information in the database, what the property is, and what type
@@ -169,6 +171,10 @@ database of device properties are documented independently [3].
     from, all parts of the path must be provided.  For an abstract set,
     vendor and revision are the only required parts.
 
+    An <identifier> is the string used by the OS reading a property
+    set to connect a device to a device driver (e.g., PNP0010, or
+    ACPI0007).
+
 
     2.2.4. Property Definitions
     ---------------------------
@@ -179,6 +185,7 @@ database of device properties are documented independently [3].
     			 <property-definition> <set-properties>
 
     <property-definition> ::= <property-name> <property-type>
+    			      [ <property-usage> ]
     			      [ <property-values> ]
     			      [ <property-description> ]
 			      [ <property-example> ]
@@ -189,15 +196,25 @@ database of device properties are documented independently [3].
     <property-type> ::= "type" ":" <type-name> <EOL>
     <type-name> ::= "integer" | "string" | "reference" | "package"
 
+    <property-usage> ::= "usage" ":" "required" | "optional" <EOL>
+
     <property-values> ::= "value" ":" <value-list>
     <value-list> ::= <value-constraint> | <value-constraint> <value-list>
-    <value-constraint> ::= <string-value> | <integer-value>
+    <value-constraint> ::= <string-value> | <integer-value> |
+    			   <reference-value> | <subpackage-value>
     <string-value> ::= "token" ":" <string> <EOL>
                        "description" ":" <string> <EOL>
     <integer-value> ::= "integer" ":" <range-list> <EOL>
                         "description" ":" <string> <EOL>
     <range-list> ::= <range> { "," <range> }
     <range> ::= <integer> ".." <integer> | <integer>
+    <reference-value> ::= "reference" ":" <ACPI-name> <EOL>
+                          "description" ":" <string> <EOL>
+    <subpackage-value> ::= "subpackage" ":" <subpackage-definition> <EOL>
+                           "description" ":" <string> <EOL>
+    <subpackage-definition> ::= "{" <field-type> { "," <field-type> } "}"
+    <field-type> ::= "integer" | "reference" | "string" |
+    		     <subpackage-definition>
 
     <property-description> ::= "description" ":" <free-form-text>
 
@@ -206,7 +223,11 @@ database of device properties are documented independently [3].
     <free-form-text> ::= <any-text> <EOL> { " " <any-text> <EOL> } <EOL>
 
     <property-dependency> ::= "requires" ":" <property-name-list>
-    <property-name-list> ::= <property-name> { "," <property-name> }
+    <property-name-list> ::= <name> { "," <name> }
+
+    A <string> starts with the first non-blank character and continues
+    to the <EOL>; any white space between the last non-blank and the
+    <EOL> will be removed.
 
 
     2.2.5. Additional Syntactical and Semantic Rules
@@ -250,7 +271,13 @@ database of device properties are documented independently [3].
     relevant, and then only to indicate the continuation of the text.
 
     If a property has a <property-dependency>, each <property-name>
-    must be a name being defined in the current property set.
+    must be a name being defined in the current property set, or a parent
+    set the property set is derived from.
+
+    If a property does not have a <property-usage> explicitly stated, it
+    is assumed to be "optional."  However, if <property-usage> indicates
+    the property is "required," and the property also has a
+    <property-dependency>, any dependencies also become "required."
 
     If a property set is derived from other sets, the full path to the
     parent sets must be provided.
@@ -260,11 +287,11 @@ database of device properties are documented independently [3].
     -------------------------------------
     property-set:	NIC Device Properties
     set-type:		definition
-    vendor:		Yoyodyne, Inc.
+    vendor:		Yoyodyne Inc.
     bus:		pci
     device-id:		YYDN1001
     revision:		0
-    derived-from:	/Yoyodyne, Inc./pci/YYDN1000/25
+    derived-from:	/Yoyodyne Inc./pci/YYDN1000/25
 
     property:		phy-mode
     type:		string
