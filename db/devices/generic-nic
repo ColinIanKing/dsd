@@ -1,7 +1,0 @@
-device: generic-nic
-owner: Al Stone <ahs3@redhat.com>
-description: general use network interface card
-properties:
-    - phy-mode
-    - phy-channel
-    - mac-address

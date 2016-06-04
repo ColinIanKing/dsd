@@ -1,0 +1,39 @@
+property-set:	NIC Device Properties
+set-type:	definition
+vendor:		Yoyodyne Inc.
+bus:		pci
+device-id:	YYDN1001
+revision:	0
+derived-from:	/Yoyodyne Inc./pci/YYDN1000/25
+
+property:	phy-mode
+type:		string
+description:
+	Defines the PHY mode to be used for this device.
+values:
+	token:		na
+	description:	none available
+	token:		mii
+	description	media independent interface (MII)
+	token:		gmii
+	description	gigabit MII
+	token:		sgmii
+	description	serial gigabit MII
+example:
+	Package (2) { "phy-mode", "gmii" }
+
+property:	phy-channel
+type:		integer
+values:
+	integer:	0..255
+	description:	hex value of the PHY channel number
+description:
+	If present, defines the PHY channel number (in hex) to be used
+	by this device.
+example:
+	Package (2) { "phy-channel", 3 }
+
+submitted-by:	N. Bonaparte <nb@waterloo.be>
+acked-by:	A. Wellesley <duke@wellington.co.uk>
+
+
