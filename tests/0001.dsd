@@ -3,9 +3,10 @@ property-set:	NIC Device Properties
 set-type:	definition
 vendor:		Yoyodyne Inc.
 bus:		pci
-device-id:	YYDN1001		# and test a comment here
+device-id:	YYDN1001		# test a comment here
 revision:	0
 derived-from:	/Yoyodyne Inc./pci/YYDN1000/25
+derived-from:	/Yoyodyne Inc./acpi/ACPI0007/0
 
 property:	phy-mode
 type:		string
@@ -15,11 +16,11 @@ values:
 	token:		na
 	description:	none available
 	token:		mii
-	description	media independent interface (MII)
+	description:	media independent interface (MII)
 	token:		gmii
-	description	gigabit MII
+	description:	gigabit MII
 	token:		sgmii
-	description	serial gigabit MII
+	description:	serial gigabit MII
 example:
 	Package (2) { "phy-mode", "gmii" }
 

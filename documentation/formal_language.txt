@@ -111,7 +111,7 @@ database of device properties are documented independently [3].
     <type-name> ::= "abstract" | "subset" | "definition"
 
     <parent-sets> ::= "derived-from" ":" <set-list>
-    <set-list> ::= <full-path-to-parent> { "," <full-path-to-parent> }
+    <set-list> ::= <full-path-to-parent> { <EOL> <full-path-to-parent> } <EOL>
 
     <acks> ::= <acked-by> | <acked-by> <acks>
     <acked-by> ::= "acked-by" ":" <person> <EOL>
@@ -144,6 +144,9 @@ database of device properties are documented independently [3].
     mailing list with "Acked-by: Name <email@address>", but (2) the 
     name used will be checked againt the list of database maintainers
     and must be present there before it is considered valid.
+
+    There may be multiple <derived-from> lines; <acks>, <submitters>
+    and <reviewers> will likely be multiple lines as well.
 
 
     2.2.3. Set Location
@@ -198,7 +201,7 @@ database of device properties are documented independently [3].
 
     <property-usage> ::= "usage" ":" "required" | "optional" <EOL>
 
-    <property-values> ::= "value" ":" <value-list>
+    <property-values> ::= "values" ":" <value-list>
     <value-list> ::= <value-constraint> | <value-constraint> <value-list>
     <value-constraint> ::= <string-value> | <integer-value> |
     			   <reference-value> | <subpackage-value>
