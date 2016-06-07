@@ -35,7 +35,31 @@ description:
 example:
 	Package (2) { "phy-channel", 3 }
 
+property:	test-reference
+type:		reference
+requires:	phy-mode, phy-channel
+description:
+	This is only a test of references.
+values:
+	reference:	\\_SB.OBJA.OBJB
+	description:	a name of an ACPI object somewhere
+
+property:	test-package
+type:		package
+description:
+	This is only a test of packages.
+values:
+	subpackage:	{ integer, integer, integer,
+			  reference, reference, reference, reference,
+			  string, string, string, string, string,
+			  integer, string, reference,
+			  reference, integer, string
+			}
+	description:	a package of stuff
+
 submitted-by:	N. Bonaparte <nb@waterloo.be>
 acked-by:	A. Wellesley <duke@wellington.co.uk>
+reviewed-by:	Slartibartfarst <slarti@magrathea.com>
+reviewed-by:	Z. Beeblebrox <like@everywhere.man>
 
 

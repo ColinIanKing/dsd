@@ -27,8 +27,9 @@
 *.i*86
 *.x86_64
 *.hex
-dsd
-tools/dsd
 
 # Debug files
 *.dSYM/
+
+# python cruft
+__pycache__

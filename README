@@ -1,7 +1,6 @@
 dsd -- a command line tool for _DSD device property registrations
 -----------------------------------------------------------------
-
-A simple 'make' will produce a command line tool to help in the collection,
+This is a simple command line tool to help in the collection,
 registration and maintenance of entries describing the device properties
 allowed via the _DSD method in ACPI [0] -- and in Device Tree (DT).
 
@@ -30,106 +29,34 @@ location and format for the definition of these properties, so that anyone
 that needs to can easily get to them, register new ones, or share existing
 properties.
 
-Each device property is described in YAML (examples below, with details in
-the file called YAML).  At present, a directory contains the YAML, with one
-file per device property, one file per device using those properties, and
-acts as a very crude "data base" for all of the entries.  The dsd command
-provides several functions for dealing with this "data base" of device
-properties:
+Each property set is described in a text file, using a simple formal
+language described in [1].  This can in turn be stored in a database
+created by dsd, as described in [2].  The dsd command provides several
+functions for dealing with this database of device properties:
 
    -- initialize the data base
-   -- verify the YAML is correct
-   -- add the device property to the data base in a consistent format
-   -- remove a device property from the data base
-   -- list all known device property names
-   -- output the info from a given device property
-   -- output a basic text description of the property for use in Linux
-      documentation (or elsewhere)
+   -- verify a property-set text file is correct
+   -- queue a property-set text file for review and possible inclusion
+   -- approve a property-set text file for inclusion, and update the
+      database accordingly
 
 Additional functions can be added (all the source is provided), and should
 this project work out, more will be -- for example, summaries of all of
 the properties for a given device, or analysis indicating whether or not
 a property is needed and by what devices, or perhaps even more clever things.
 
+
 Building the tool
 -----------------
-The dsd command requires that libyaml for C be installed [1].  Then, just
-do:
+The dsd command is all Python 3.  From this directory, just run it:
 
-   % make
+   % ./dsd
 
-There is no install target at present.  Run the command:
+There is no formal install at this time.  Run the command:
 
    % ./dsd help
 
 to show what options are available.
-
-YAML
-----
-The dsd command uses basic YAML formatting (so, spaces for indentation, then
-indentation for indicating structure) and currently recognizes the following
-keywords:
-
-	property:	<name>
-
-	owner:		<string>
-
-	type:		integer |
-			hexadecimal-integer |
-			hexadecimal-address-package |
-			string |
-			<type> <value-list>
-
-	description:	<free text>
-
-	example:	<free text>
-
-For example:
-
-property:       phy-mode
-owner:          Al Stone <ahs3@redhat.com>
-type:           string
-values:
-        - token:        na
-          description:  none available
-        - token:        mii
-          description:  media independent interface (MII)
-        - token:        gmii
-          description:  gigabit MII
-        - token:        sgmii
-          description:  serial gigabit MII
-        - token:        tbi
-          description:  ten bit interface
-        - token:        revmii
-          description:  reverse MII
-        - token:        rmii
-          description:  reduced MII
-        - token:        rgmii
-          description:  reduced gigabit MII (RGMII)
-        - token:        rgmii-id
-          description:  RGMII with internal delay
-        - token:        rgmii-rxid
-          description:  RGMII with receive delay only
-        - token:        rgmii-txid
-          description:  RGMII with transmit delay only
-        - token:        rtbi
-          description:  reduced ten bit interface
-        - token:        smii
-          description:  serial MII
-        - token:        xgmii
-          description:  10 gigabit MII
-        - token:        moca
-          description:  multimedia over coax
-        - token:        qsgmii
-          description:  quad serial gigabit MII
-description: |
-        Defines the PHY mode to be used for this device.
-example: |
-        Package (2) { "phy-mode", "xgmii" }
-
-Please use '---' to separate device property definitions if several are
-included in a single file of text (dsd will separate them into unique
-entries in the "data base").
 
 
 References
@@ -142,6 +69,10 @@ References
 
     http://www.uefi.org/sites/default/files/resources/_DSD-device-properties-UUID.pdf
 
-[1] On Debian: apt-get install libyaml-dev
-    On Fedora: dnf install libyaml-devel
+[1] documentation/formal_language.txt
+
+[2] documentation/database_rules.txt
+
+[3] documentation/process_rules.txt -- how to submit a property set for
+    possible inclusion
 

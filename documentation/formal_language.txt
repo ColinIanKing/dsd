@@ -1,6 +1,6 @@
 ﻿_DSD Formal Language Ruleset
 ============================
-Dated:	2016-06-03
+Dated:	2016-06-07
 Status:	DRAFT
 
 
@@ -146,7 +146,7 @@ database of device properties are documented independently [3].
     and must be present there before it is considered valid.
 
     There may be multiple <derived-from> lines; <acks>, <submitters>
-    and <reviewers> will likely be multiple lines as well.
+    and <reviewers> can be multiple lines as well.
 
 
     2.2.3. Set Location
