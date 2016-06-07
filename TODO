@@ -1,0 +1,10 @@
+-- add list pending queue cmd
+-- add list approved cmd
+-- add approve cmd
+-- various listing options:
+	-- by device
+	-- by vendor
+	-- by bus
+	-- ...
+-- print out current text for a property
+-- print out all properties for a device-id

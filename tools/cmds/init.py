@@ -9,7 +9,7 @@ import sys
 PENDING = "pending"
 APPROVED = "approved"
 ROOT = "root"
-LASTNUM=".lastnum"
+NEXTNUM=".nextnum"
 
 def run(dbname):
     print("creating db: %s" % (dbname))
@@ -26,9 +26,9 @@ def run(dbname):
         subd = os.path.join(dbname, ii)
         if not os.path.isdir(subd):
             os.makedirs(subd)
-        lastnum = 0
-        with open(os.path.join(subd, LASTNUM), "w") as f:
-            print("%d" % (lastnum), file=f)
+        nextnum = 0
+        with open(os.path.join(subd, NEXTNUM), "w") as f:
+            f.write("%s\n" % (str(nextnum)))
             f.close()
 
     return

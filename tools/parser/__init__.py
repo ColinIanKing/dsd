@@ -477,3 +477,8 @@ class Parser:
             props.append(path)
         return props
 
+    def okay(self):
+        return not self.error
+
+    def property_set_name(self):
+        return self.attrs[PROPERTY_SET]

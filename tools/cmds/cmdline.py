@@ -7,6 +7,7 @@ import sys
 
 import tools.cmds.check
 import tools.cmds.init
+import tools.cmds.queue
 import tools.cmds.usage
 import tools.env.config
 
@@ -53,6 +54,12 @@ def run():
         else:
             db = tools.env.config.get_dbpath()
         tools.cmds.init.run(db)
+
+    elif __cmd == "queue":
+        if len (__args) > 0:
+            tools.cmds.queue.run(__args)
+        else:
+            print("? queue command requires a file to put in the queue")
 
     else:
         print("? no such command: %s" % (__cmd))
