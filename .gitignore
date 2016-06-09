@@ -33,3 +33,7 @@
 
 # python cruft
 __pycache__
+
+# dsd cruft
+db/*
+db/pending/.nextnum

@@ -75,6 +75,7 @@ class Parser:
         self.fname = fname
         self.text = ""
         self.lines = 0
+        self.lines_parsed = 0
         self.errors = 0
         self.properties = {}
         self.attrs = {}
@@ -462,18 +463,22 @@ class Parser:
                         self.error = True
                         self.errors += 1
         
+        self.lines_parsed = lexer.lineno - 1
+        return self.error
+
+    def print_result(self):
         print("File: %s" % (self.fname))
         print("%s lines read" % (self.lines))
-        print("%s lines parsed, %d errors found" %
-              (lexer.lineno - 1, self.errors))
-        return self.error
+        print("%s lines parsed, %d errors found" % 
+              (self.lines_parsed, self.errors))
+        return
 
     def get_property_locations(self):
         props = []
         for ii in self.properties.keys():
+            rev = ("%04d" % (int(self.attrs[REVISION])))
             path = os.path.join(os.sep, self.attrs[VENDOR], self.attrs[BUS],
-                                self.attrs[DEVICE_ID], self.attrs[REVISION],
-                                ii)
+                                self.attrs[DEVICE_ID], rev, ii)
             props.append(path)
         return props
 
@@ -482,3 +487,82 @@ class Parser:
 
     def property_set_name(self):
         return self.attrs[PROPERTY_SET]
+
+    def get_acks(self):
+        return self.attrs[ACKED_BY]
+
+    def get_set_location(self):
+        rev = ("%04d" % (int(self.attrs[REVISION])))
+        path = os.path.join(os.sep, self.attrs[VENDOR], self.attrs[BUS],
+                            self.attrs[DEVICE_ID], rev)
+        return path
+
+    def get_base_sets(self):
+        return self.attrs[DERIVED_FROM]
+
+    def get_properties(self):
+        return self.properties.keys()
+
+    def get_source(self):
+        return ''.join(self.text)
+
+    def write_property(self, pname, f):
+        # f must be a stream, and already open to write
+
+        if not pname in self.properties.keys():
+            return
+
+        f.write("property: %s\n" % (pname))
+        t = self.properties[pname][TYPE]
+        f.write("type: %s\n" % (t))
+        for ii in self.properties[pname].keys():
+            if ii == PROPERTY or ii == TYPE:
+                continue
+            elif ii == DESCRIPTION or ii == EXAMPLE:
+                f.write("%s:\n %s\n" % (ii, self.properties[pname][ii]))
+            elif ii == VALUES:
+                f.write("%s:\n" % (ii))
+                for jj in self.properties[pname][VALUES]:
+                    if t == STRING:
+                        vt = TOKEN
+                    elif t == INTEGER:
+                        vt = INTEGER
+                    elif t == REFERENCE:
+                        vt = REFERENCE
+                    else:
+                        vt = SUBPACKAGE
+                    if vt == SUBPACKAGE:
+                        f.write("    %s: {\n        " % (vt))
+                        count = 0
+                        chars = 8
+                        for kk in jj[vt]:
+                            if count == 0:
+                                f.write("%s" % (kk))
+                                chars += len(kk)
+                            else:
+                                if chars + len(kk) + 2 > 72:
+                                    f.write(",\n        %s" % (kk))
+                                    chars = len(kk) + 8
+                                else:
+                                    f.write(", %s" % (kk))
+                                    chars += len(kk) + 2
+                            count += 1
+                        f.write("\n    }\n")
+                        f.write("    %s: %s\n" % (DESCRIPTION, jj[DESCRIPTION]))
+                    else:
+                        f.write("    %s: %s\n    %s: %s\n" %
+                                (vt, jj[vt], DESCRIPTION, jj[DESCRIPTION]))
+            elif ii == REQUIRES:
+                f.write("%s: " % (ii))
+                count = 0
+                for jj in self.properties[pname][REQUIRES]:
+                    if count == 0:
+                        f.write("%s" % (jj))
+                    else:
+                        f.write(", %s" % (jj))
+                    count += 1
+                f.write("\n")
+            else:
+                f.write("%s: %s\n" % (ii, self.properties[pname][ii]))
+
+        return

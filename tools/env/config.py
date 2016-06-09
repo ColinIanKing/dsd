@@ -10,7 +10,8 @@ defaultrc="/etc/dsdrc"
 userrc="$HOME/.dsdrc"
 
 config = configparser.ConfigParser()
-config['database'] = { "path" : "./db"
+config['database'] = { "path" : "./db",
+                       "maintainers" : "./MAINTAINERS",
                      }
 config['user'] = { "name" : "",
                    "email" : "",
@@ -27,6 +28,8 @@ def readrc():
 
     config.set("database", "path", 
                os.path.expandvars(config.get("database", "path")))
+    config.set("database", "maintainers", 
+               os.path.expandvars(config.get("database", "maintainers")))
 
     return
 
@@ -45,4 +48,9 @@ def get_dbpath():
     global config
 
     return config.get("database", "path")
+
+def get_maintainers_path():
+    global config
+
+    return config.get("database", "maintainers")
 

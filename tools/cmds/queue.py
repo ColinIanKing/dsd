@@ -10,6 +10,13 @@ def run(fnames):
     db = tools.db.Database()
     db.open()
     for ii in fnames:
+        if ii == "--list":
+            plist = db.list_pending()
+            if plist:
+                for jj in plist:
+                    print('%s' % (jj))
+            continue
+
         p = tools.parser.Parser(ii)
         #p.dump()
 

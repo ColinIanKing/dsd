@@ -1,6 +1,4 @@
--- add list pending queue cmd
--- add list approved cmd
--- add approve cmd
+-- add command to ack a queued set
 -- various listing options:
 	-- by device
 	-- by vendor
@@ -8,3 +6,4 @@
 	-- ...
 -- print out current text for a property
 -- print out all properties for a device-id
+-- verify that all base property sets actually exist

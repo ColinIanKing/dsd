@@ -12,6 +12,7 @@ def run(fnames):
     for ii in fnames:
         p = tools.parser.Parser(ii)
         #p.dump()
+        p.print_result()
 
         # make sure the properties don't already exist
         props = p.get_property_locations()

@@ -5,7 +5,9 @@
 
 import sys
 
+import tools.cmds.approve
 import tools.cmds.check
+import tools.cmds.config
 import tools.cmds.init
 import tools.cmds.queue
 import tools.cmds.usage
@@ -60,6 +62,15 @@ def run():
             tools.cmds.queue.run(__args)
         else:
             print("? queue command requires a file to put in the queue")
+
+    elif __cmd == "approve":
+        if len (__args) > 0:
+            tools.cmds.approve.run(__args)
+        else:
+            print("? approve command requires a queued name")
+
+    elif __cmd == "config":
+        tools.cmds.config.run(__args)
 
     else:
         print("? no such command: %s" % (__cmd))

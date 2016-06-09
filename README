@@ -39,6 +39,9 @@ functions for dealing with this database of device properties:
    -- queue a property-set text file for review and possible inclusion
    -- approve a property-set text file for inclusion, and update the
       database accordingly
+   -- list the property-sets queued for approval
+   -- list the property-sets that have been approved
+   -- list the current configuration variable settings
 
 Additional functions can be added (all the source is provided), and should
 this project work out, more will be -- for example, summaries of all of

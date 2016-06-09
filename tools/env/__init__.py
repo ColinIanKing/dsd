@@ -4,7 +4,7 @@
 #
 
 __progname = "dsd"
-__version = "0.0.7"
+__version = "0.0.10"
 
 def print_version():
     print("%s, v%s" % (__progname, __version))
