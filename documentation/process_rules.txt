@@ -1,6 +1,6 @@
 ﻿_DSD Property Registration Ruleset
 ==================================
-Dated:	2016-05-31
+Dated:	2016-06-14
 Status:	DRAFT
 
 
@@ -76,41 +76,39 @@ specific device via its Device ID.
 
 The above observations lead to the following rules:
 
-    3.1. Individual Properties Cannot Be Registered
-    -----------------------------------------------
-    The common device properties database [2] holds property sets, not
-    individual properties.
+3.1. Individual Properties Cannot Be Registered
+-----------------------------------------------
+The common device properties database [2] holds property sets, not
+individual properties.
 
-    Even if the given property set consists of a single property, it
-    still has to be registered as a set.
-
-
-    3.2. Device ID Requirement
-    --------------------------
-    For every property set in the database, with the exception of
-    property sets created for the sole purpose of inheritance (see
-    the section entitled "Inheritance" below), there must be at least
-    one Device ID associated with it.  That can be a PNP or ACPI device
-    ID, a device ID that can be returned by the ACPI _CID object, a PCI
-    Class Code that can be returned by the ACPI _CLS object, or
-    generally a device ID that can be used by an Operating System to
-    find a matching driver for the device.  In any case, it must be well
-    defined in a way that is not OS-specific.
+Even if the given property set consists of a single property, it still
+has to be registered as a set.
 
 
-    3.3. What Property Sets Are Eligible for Registration
-    -----------------------------------------------------
-    Property sets eligible for registration must follow the guidance
-    given by the Device Properties UUID definition document [1].
+3.2. Device ID Requirement
+--------------------------
+For every property set in the database, with the exception of property
+sets created for the sole purpose of inheritance (see the section
+entitled "Inheritance" below), there must be at least one Device ID
+associated with it.  That can be a PNP or ACPI device ID, a device ID
+that can be returned by the ACPI _CID object, a PCI Class Code that can
+be returned by the ACPI _CLS object, or generally a device ID that can
+be used by an Operating System to find a matching driver for the device.
+In any case, it must be well defined in a way that is not OS-specific.
 
-    _DSD properties are intended to be used in addition to, and not
-    instead of, the existing mechanisms defined by the ACPI
-    specification.  Therefore, as a rule, they should only be used if
-    the ACPI specification does not make direct provisions for handling
-    the underlying use case.  Property sets that do not follow that rule
-    generally cannot be registered.
 
-    [Note: Examples are given in [1].]
+3.3. What Property Sets Are Eligible for Registration
+-----------------------------------------------------
+Property sets eligible for registration must follow the guidance given
+by the Device Properties UUID definition document [1].
+
+_DSD properties are intended to be used in addition to, and not instead
+of, the existing mechanisms defined by the ACPI specification.
+Therefore, as a rule, they should only be used if the ACPI specification
+does not make direct provisions for handling the underlying use case.
+Property sets that do not follow that rule generally cannot be registered.
+
+[Note: Examples are given in [1].]
 
 
 4. Who Can Register Property Sets

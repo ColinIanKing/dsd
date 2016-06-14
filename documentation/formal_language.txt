@@ -37,73 +37,71 @@ database of device properties are documented independently [3].
 2. Formalisms for Describing Property Sets
 ------------------------------------------
 
-    2.1. Notes on Database Structure
-    --------------------------------
-    Given the database structure described in [1], the directory tree for
-    a database might look something like the following:
+2.1. Notes on Database Structure
+--------------------------------
+Given the database structure described in [1], the directory tree for
+a database might look something like the following:
 
-        --- Path ----------------------------------            -- Entries --
+--- Path ----------------------------------            -- Entries --
 
-	+-- root						1
-	     |
-	     +-- vendor directory ("Yoyodyne, Inc.")		1..n
-                  |
-		  + bus ("acpi"|"pci"|"common")			1..n
-                     |
-		     + Device ID ("ACPI0007"|...)		1..n
-		        |
-			+ revision ("0"|"1"|...)		1..n
-                           |
-			   + property attributes file		1..n
-			   |
-			   + property subset tree		1..n
-			      |
-			      + property attributes file	1..n
-			      |
-			      + property subset tree		1..n
-
-
-    This is just a quick overview of the possible internal structure.
-    There will be only one root, but there are can be one to n 
-    subdirectories or files of each and every flavor.  In parentheses,
-    we can see what some of the values might be, so that we might have
-    a path that looks like this:
-
-        /Yoyodyne, Inc./acpi/ACPI0007/0/instruction-cycles-per-fortnight
-
-    Again, this is just an example, provided to be more concrete about
-    the database and its content, and to show how a formal language can
-    be geared towards describing that content.
++-- root						1
+     |
+     +-- vendor directory ("Yoyodyne, Inc.")		1..n
+          |
+	  + bus ("acpi"|"pci"|"common")			1..n
+             |
+	     + Device ID ("ACPI0007"|...)		1..n
+	        |
+		+ revision ("0"|"1"|...)		1..n
+                   |
+		   + property attributes file		1..n
+		   |
+		   + property subset tree		1..n
+		      |
+		      + property attributes file	1..n
+		      |
+		      + property subset tree		1..n
 
 
-    2.2. Formal Language for Property Sets
-    --------------------------------------
-    When someone asks to register a property set, what information must
-    they provide?  Informally, we need enough information to be able to
-    place a file in the database directory, and then stash a bit more
-    information in that file to describe a property and its possible
-    values.
+This is just a quick overview of the possible internal structure.  There
+will be only one root, but there are can be one to n subdirectories or
+files of each and every flavor.  In parentheses, we can see what some of
+the values might be, so that we might have a path that looks like this:
+
+/Yoyodyne, Inc./acpi/ACPI0007/0/instruction-cycles-per-fortnight
+
+Again, this is just an example, provided to be more concrete about the
+database and its content, and to show how a formal language can be
+geared towards describing that content.
 
 
-    2.2.1. Set Definition
-    ---------------------
-    On a more formal basis, we can use BNF to describe what we need:
+2.2. Formal Language for Property Sets
+--------------------------------------
+When someone asks to register a property set, what information must they
+provide?  Informally, we need enough information to be able to place a
+file in the database directory, and then stash a bit more information in
+that file to describe a property and its possible values.
+
+
+2.2.1. Set Definition
+---------------------
+On a more formal basis, we can use BNF to describe what we need:
 
     <set-definition> ::= <set-preamble> <set-location> <set-properties>
 
-    That is, each property set definition consists of a preamble, some
-    location information, and property definitions.
+That is, each property set definition consists of a preamble, some
+location information, and property definitions.
 
 
-    2.2.2. Preamble Definition
-    --------------------------
-    The preamble provides an identifying name for the set, defines what
-    type of set we have, lists any other sets this one may be derived
-    from, and who approved the registration; optionally, we can include
-    who submitted it, and who reviewed it, solely for historical records:
+2.2.2. Preamble Definition
+--------------------------
+The preamble provides an identifying name for the set, defines what type
+of set we have, lists any other sets this one may be derived from, and
+who approved the registration; optionally, we can include who submitted
+it, and who reviewed it, solely for historical records:
 
     <set-preamble> ::= <set-name> <set-type> [ <parent-sets> ]
-    		       <acks> [ <submitters> ] [ <reviewers> ]
+		       <acks> [ <submitters> ] [ <reviewers> ]
 
     <set-name> ::= "property-set" ":" <name> <EOL>
 
@@ -124,35 +122,35 @@ database of device properties are documented independently [3].
     <reviewers> ::= <reviewed-by> | <reviewed-by> <reviewers>
     <reviewed-by> ::= "reviewed-by" ":" <person> <EOL>
 
-    A <name> may not include an <EOL>, commas (",") or slashes ("/").
+A <name> may not include an <EOL>, commas (",") or slashes ("/").
 
-    A property set can be "abstract", a "subset", or a "definition."
-    A definition has no ambiguity: we know precisely where to put the
-    information in the database, what the property is, and what type
-    it is.  A subset is a collection of property definitions for a
-    single device.  An abstract set could be located in any number of
-    places in the database directory tree and is only present in order
-    to provide properties other definitions can re-use.
+A property set can be "abstract", a "subset", or a "definition."  A
+definition has no ambiguity: we know precisely where to put the
+information in the database, what the property is, and what type it is.
+A subset is a collection of property definitions for a single device.
+An abstract set could be located in any number of places in the database
+directory tree and is only present in order to provide properties other
+definitions can re-use.
 
-    The <submitters>, if not provided, will be gleaned from the email
-    the property set was sent in (the From: header, see [3] for details
-    on the submission process).  The <reviewers> will be gleaned from
-    emails sent in response to a submission on the dsd@acpica.org 
-    mailing list; the line "Reviewed-by: Name <email@address>" will be
-    the indicator to add such a line to the property set definition.
-    The <acks> are similar in that (1) there must be an email on the
-    mailing list with "Acked-by: Name <email@address>", but (2) the 
-    name used will be checked againt the list of database maintainers
-    and must be present there before it is considered valid.
+The <submitters>, if not provided, will be gleaned from the email the
+property set was sent in (the From: header, see [3] for details on the
+submission process).  The <reviewers> will be gleaned from emails sent
+in response to a submission on the dsd@acpica.org mailing list; the line
+"Reviewed-by: Name <email@address>" will be the indicator to add such a
+line to the property set definition.  The <acks> are similar in that (1)
+there must be an email on the mailing list with "Acked-by: Name
+<email@address>", but (2) the name used will be checked againt the list
+of database maintainers and must be present there before it is
+considered valid.
 
-    There may be multiple <derived-from> lines; <acks>, <submitters>
-    and <reviewers> can be multiple lines as well.
+There may be multiple <derived-from> lines; <acks>, <submitters> and
+<reviewers> can be multiple lines as well.
 
 
-    2.2.3. Set Location
-    -------------------
-    Location information tells us where in the database we need to
-    place the device properties being defined in this set:
+2.2.3. Set Location
+-------------------
+Location information tells us where in the database we need to place the
+device properties being defined in this set:
 
     <set-location> ::= <abstract-set-location> | <full-set-location>
     <abstract-set-location> ::= <vendor> [ <bus> ] [ <device-id> ] <revision>
@@ -166,31 +164,30 @@ database of device properties are documented independently [3].
 
     <revision> ::= "revision" ":" <integer> <EOL>
 
-    These can be assembled into a path in the database:
+These can be assembled into a path in the database:
 
-        /vendor-name/bus-name/device-id-identifier/revision-number
+    /vendor-name/bus-name/device-id-identifier/revision-number
 
-    Unless this is an abstract property set for other sets to inherit
-    from, all parts of the path must be provided.  For an abstract set,
-    vendor and revision are the only required parts.
+Unless this is an abstract property set for other sets to inherit from,
+all parts of the path must be provided.  For an abstract set, vendor and
+revision are the only required parts.
 
-    An <identifier> is the string used by the OS reading a property
-    set to connect a device to a device driver (e.g., PNP0010, or
-    ACPI0007).
+An <identifier> is the string used by the OS reading a property set to
+connect a device to a device driver (e.g., PNP0010, or ACPI0007).
 
 
-    2.2.4. Property Definitions
-    ---------------------------
-    A stanza must be provided to describe each individual property that
-    is an element of a property set:
+2.2.4. Property Definitions
+---------------------------
+A stanza must be provided to describe each individual property that is
+an element of a property set:
 
     <set-properties> ::= <property-definition> | 
-    			 <property-definition> <set-properties>
+			 <property-definition> <set-properties>
 
     <property-definition> ::= <property-name> <property-type>
-    			      [ <property-usage> ]
-    			      [ <property-values> ]
-    			      [ <property-description> ]
+			      [ <property-usage> ]
+			      [ <property-values> ]
+			      [ <property-description> ]
 			      [ <property-example> ]
 			      [ <property-dependency> ]
 
@@ -204,7 +201,7 @@ database of device properties are documented independently [3].
     <property-values> ::= "values" ":" <value-list>
     <value-list> ::= <value-constraint> | <value-constraint> <value-list>
     <value-constraint> ::= <string-value> | <integer-value> |
-    			   <reference-value> | <subpackage-value>
+			   <reference-value> | <subpackage-value>
     <string-value> ::= "token" ":" <string> <EOL>
                        "description" ":" <string> <EOL>
     <integer-value> ::= "integer" ":" <range-list> <EOL>
@@ -217,7 +214,7 @@ database of device properties are documented independently [3].
                            "description" ":" <string> <EOL>
     <subpackage-definition> ::= "{" <field-type> { "," <field-type> } "}"
     <field-type> ::= "integer" | "reference" | "string" |
-    		     <subpackage-definition>
+		     <subpackage-definition>
 
     <property-description> ::= "description" ":" <free-form-text>
 
@@ -228,80 +225,78 @@ database of device properties are documented independently [3].
     <property-dependency> ::= "requires" ":" <property-name-list>
     <property-name-list> ::= <name> { "," <name> }
 
-    A <string> starts with the first non-blank character and continues
-    to the <EOL>; any white space between the last non-blank and the
-    <EOL> will be removed.
+A <string> starts with the first non-blank character and continues to
+the <EOL>; any white space between the last non-blank and the <EOL> will
+be removed.
 
 
-    2.2.5. Additional Syntactical and Semantic Rules
-    ------------------------------------------------
-    Comments start anywhere in a line of text, using the "#", and
-    continue to the end of the line ("<EOL>").
+2.2.5. Additional Syntactical and Semantic Rules
+------------------------------------------------
+Comments start anywhere in a line of text, using the "#", and continue
+to the end of the line ("<EOL>").
 
-    Most lines consist of a keyword, followed by a ":", followed by
-    text providing a value, followed by an <EOL>.  The only exceptions
-    are descriptions and examples that may have several lines of text,
-    with each continuation line starting with a " ".  The first line
-    that is either an empty line or starts with something other than
-    a " " terminates the block of text.
+Most lines consist of a keyword, followed by a ":", followed by text
+providing a value, followed by an <EOL>.  The only exceptions are
+descriptions and examples that may have several lines of text, with each
+continuation line starting with a " ".  The first line that is either an
+empty line or starts with something other than a " " terminates the
+block of text.
 
-    Lines may generally appear in almost any order, within some 
-    constraints:
+Lines may generally appear in almost any order, within some constraints:
 
-        -- A <set-name> marks the beginning of a property set and all
-	   lines after it, until the next <set-name>, will be part of
-	   that set.  So, a <set-type> will always define the type of
-	   the prior <set-name> in the file.
+    -- A <set-name> marks the beginning of a property set and all lines
+       after it, until the next <set-name>, will be part of that set.
+       So, a <set-type> will always define the type of the prior
+       <set-name> in the file.
 
-        -- Similarly, a <property-name> marks the beginning of a 
-	   property definition and all lines after it, until the next
-	   <property-name>, will be part of that definition.  So, a
-	   <property-type> will always define the type of the prior
-	   <property-name> in the file.
+    -- Similarly, a <property-name> marks the beginning of a property
+       definition and all lines after it until the next <property-name>,
+       will be part of that definition.  So, a <property-type> will
+       always define the type of the prior <property-name> in the file.
 
-	-- Set location information always defines the location of the
-	   previous <set-name> in the file, and applies identically to
-	   all property definitions provided in the set.
+    -- Set location information always defines the location of the
+       previous <set-name> in the file, and applies identically to all
+       property definitions provided in the set.
 
-	-- Property values, if given, must follow the order given in
-           the BNF: "values:<EOL>" followed by one or more sets of
-	   "token: <string><EOL> description: <string><EOL>", or the
-	   equivalent "integer: <range><EOL> description: <string>
-	   <EOL>".  This is the only rigorous ordering defined.
+    -- Property values, if given, must follow the order given in the
+       BNF: "values:<EOL>" followed by one or more sets of "token: 
+       <string><EOL> description: <string><EOL>", or the equivalent
+       "integer: <range><EOL> description: <string> <EOL>".  This is the
+       only rigorous ordering defined.
 
-    In general, white space and blank lines are ignored and irrelevant.
-    The text for descriptions and examples is the only time it is
-    relevant, and then only to indicate the continuation of the text.
+In general, white space and blank lines are ignored and irrelevant.  The
+text for descriptions and examples is the only time it is relevant, and
+then only to indicate the continuation of the text.
 
-    If a property has a <property-dependency>, each <property-name>
-    must be a name being defined in the current property set, or a parent
-    set the property set is derived from.
+If a property has a <property-dependency>, each <property-name> must be
+a name being defined in the current property set, or a parent set the
+property set is derived from.
 
-    If a property does not have a <property-usage> explicitly stated, it
-    is assumed to be "optional."  However, if <property-usage> indicates
-    the property is "required," and the property also has a
-    <property-dependency>, any dependencies also become "required."
+If a property does not have a <property-usage> explicitly stated, it is
+assumed to be "optional."  However, if <property-usage> indicates the
+property is "required," and the property also has a
+<property-dependency>, any dependencies also become "required."
 
-    If a property set is derived from other sets, the full path to the
-    parent sets must be provided.
+If a property set is derived from other sets, the full path to the
+parent sets must be provided.
 
 
-    2.2.6. A Brief and Incomplete Example
-    -------------------------------------
-    property-set:	NIC Device Properties
-    set-type:		definition
-    vendor:		Yoyodyne Inc.
-    bus:		pci
-    device-id:		YYDN1001
-    revision:		0
-    derived-from:	/Yoyodyne Inc./pci/YYDN1000/25
+2.2.6. A Brief and Incomplete Example
+-------------------------------------
+property-set:	NIC Device Properties
+set-type:	definition
+vendor:		Yoyodyne Inc.
+bus:		pci
+device-id:	YYDN1001
+revision:	0
+derived-from:	/Yoyodyne Inc./pci/YYDN1000/25
 
-    property:		phy-mode
-    type:		string
-    description:
-    	Defines the PHY mode to be used for this device.
-    values:
-    	token:		na
+property:	phy-mode
+type:		string
+description:
+	Defines the PHY mode to be used for this device.
+values:
+	token:		na
 	description:	none available
 	token:		mii
 	description	media independent interface (MII)
@@ -309,22 +304,22 @@ database of device properties are documented independently [3].
 	description	gigabit MII
 	token:		sgmii
 	description	serial gigabit MII
-    example:
-    	Package (2) { "phy-mode", "gmii" }
+example:
+	Package (2) { "phy-mode", "gmii" }
 
-    property:		phy-channel
-    type:		integer
-    values:
-    	integer:	0..255
+property:	phy-channel
+type:		integer
+values:
+	integer:	0..255
 	description:	hex value of the PHY channel number
-    description:
-    	If present, defines the PHY channel number (in hex) to be used
+description:
+	If present, defines the PHY channel number (in hex) to be used
 	by this device.
-    example:
-    	Package (2) { "phy-channel", 3 }
+example:
+	Package (2) { "phy-channel", 3 }
 
-    submitted-by:	N. Bonaparte <nb@waterloo.be>
-    acked-by:		A. Wellesley <duke@wellington.co.uk>
+submitted-by:	N. Bonaparte <nb@waterloo.be>
+acked-by:	A. Wellesley <duke@wellington.co.uk>
 
 
 3. References
