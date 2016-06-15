@@ -1,6 +1,6 @@
 ﻿_DSD Property Database Ruleset
 ==============================
-Dated:	2016-05-31
+Dated:	2016-06-14
 Status:	DRAFT
 
 
