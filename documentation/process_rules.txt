@@ -218,7 +218,7 @@ In alphabetical order, by first name:
 
 Al Stone <ahs3@redhat.com>
 Charles Garcia-Tobin <charles.garcia-tobin@arm.com>
-Darren Hart <dvhart@infradead.org>
+Darren Hart <darren.hart@intel.com>
 David Woodhouse <david.woodhouse@intel.com>
 Rafael Wysocki <rjw.rjwysocki.net>
 
